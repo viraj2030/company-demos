@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Quote gap spotter. Harborline Distribution</title>
+  <style>
+    :root {
+      --bg: #f4f2ee;
+      --card: #ffffff;
+      --ink: #1a1a1a;
+      --muted: #5a5a5a;
+      --line: #e0dbd2;
+      --accent: #1f3d5c;
+      --conflict-bg: #fff3d6;
+      --conflict-ink: #6b4300;
+      --gap-bg: #fde8e6;
+      --gap-ink: #8a1f11;
+      --ok: #1b5e3b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121418;
+        --card: #1b1e24;
+        --ink: #f0efe9;
+        --muted: #a8a69c;
+        --line: #2c3138;
+        --accent: #9ec0e0;
+        --conflict-bg: #3a2e12;
+        --conflict-ink: #f0c36a;
+        --gap-bg: #3a1c18;
+        --gap-ink: #f0a090;
+        --ok: #8fd6b5;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { font-size: 16px; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      -webkit-text-size-adjust: 100%;
+    }
+    main {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 1.25rem 1rem calc(2.5rem + env(safe-area-inset-bottom));
+    }
+    header {
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .kicker {
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 0.35rem;
+    }
+    h1 {
+      font-size: 1.35rem;
+      line-height: 1.25;
+      margin: 0 0 0.4rem;
+      color: var(--accent);
+    }
+    .meta { font-size: 1rem; color: var(--muted); margin: 0 0 0.35rem; }
+    .tiv { margin: 0; font-size: 1rem; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 0.85rem 0;
+    }
+    h2 {
+      font-size: 1.05rem;
+      margin: 0 0 0.65rem;
+    }
+    p { margin: 0 0 0.7rem; font-size: 1rem; }
+    p:last-child { margin-bottom: 0; }
+    .cards { display: grid; gap: 0.7rem; }
+    article {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.85rem 0.9rem;
+    }
+    article h3 {
+      font-size: 1rem;
+      margin: 0 0 0.15rem;
+    }
+    .who { margin: 0 0 0.45rem; color: var(--muted); font-size: 1rem; }
+    .facts {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 1rem;
+    }
+    .facts li {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.28rem 0;
+      border-top: 1px solid var(--line);
+    }
+    .facts span { color: var(--muted); }
+    .facts b { font-weight: 600; text-align: right; }
+    .gaps { margin: 0; padding-left: 1.2rem; }
+    .gaps li { margin: 0 0 0.55rem; font-size: 1rem; }
+    .gaps li:last-child { margin-bottom: 0; }
+    .row {
+      padding: 0.7rem 0.65rem;
+      border-radius: 8px;
+      margin: 0 0 0.5rem;
+      border: 1px solid var(--line);
+    }
+    .row:last-child { margin-bottom: 0; }
+    .row.conflict { background: var(--conflict-bg); border-color: transparent; }
+    .row.gap { background: var(--gap-bg); border-color: transparent; }
+    .row h3 {
+      font-size: 1rem;
+      margin: 0 0 0.4rem;
+    }
+    .vals { margin: 0; }
+    .vals div {
+      display: grid;
+      grid-template-columns: 1.4rem 1fr;
+      gap: 0.45rem 0.55rem;
+      align-items: baseline;
+      padding: 0.18rem 0;
+    }
+    .vals dt {
+      margin: 0;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .vals dd { margin: 0; }
+    .flag { display: block; font-size: 1rem; color: var(--conflict-ink); }
+    .row.gap .flag { color: var(--gap-ink); }
+    .ok { display: block; font-size: 1rem; color: var(--ok); }
+    footer {
+      margin-top: 1.25rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="kicker">Sample quotes · not a live placement</p>
+      <h1>Harborline Distribution</h1>
+      <p class="meta">212,400 sf warehouse · Bayport, Harris County, TX · built 1987</p>
+      <p class="tiv">TIV $74.4M · building $48.2M · BPP $9.4M · BI $16.8M</p>
+    </header>
+
+    <section>
+      <h2>Three carrier quotes</h2>
+      <div class="cards">
+        <article>
+          <h3>Carrier A</h3>
+          <p class="who">Admitted · named peril · $186,400</p>
+          <ul class="facts">
+            <li><span>Building</span><b>$42.0M</b></li>
+            <li><span>AOP, wind</span><b>$25k · 2%</b></li>
+            <li><span>Flood · quake · cyber</span><b>Excluded</b></li>
+          </ul>
+        </article>
+        <article>
+          <h3>Carrier B</h3>
+          <p class="who">Surplus · special form · $241,900</p>
+          <ul class="facts">
+            <li><span>Building</span><b>$52.0M</b></li>
+            <li><span>AOP, wind</span><b>$50k · 5%</b></li>
+            <li><span>Flood · cyber</span><b>$2.5M · $1.0M</b></li>
+          </ul>
+        </article>
+        <article>
+          <h3>Carrier C</h3>
+          <p class="who">Admitted · special form · $214,750</p>
+          <ul class="facts">
+            <li><span>Building</span><b>$48.2M</b></li>
+            <li><span>AOP, wind</span><b>$100k · 2%</b></li>
+            <li><span>Quake · flood</span><b>$5.0M · excluded</b></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Conflicts and gaps</h2>
+      <p>Premium order is A, then C, then B. That order hides a $6.2M building hole on A and a 5% wind deductible on B.</p>
+      <ul class="gaps">
+        <li>A writes $42.0M on a $48.2M building. A total loss leaves $6.2M uninsured.</li>
+        <li>A is named peril. B and C are special form. Water damage, collapse, and most theft sit outside A.</li>
+        <li>Wind and hail on building plus BPP ($57.6M). A and C take 2% ($1.15M). B takes 5% ($2.88M). Same storm, $1.73M more out of pocket on B.</li>
+        <li>Flood. Only B offers a limit, and it is a $2.5M sublimit on a Bayport warehouse. A and C exclude it.</li>
+        <li>Ordinance or law. A excludes it. C pays Coverage A only. B gives A plus B at $1.0M. 1987 tilt-wall rebuild will hit current Houston fire and wind code.</li>
+        <li>Business interruption. A is $12.0M for 12 months. That is $4.8M under the $16.8M TIV. B is $18.0M for 18 months. C matches TIV for 12 months.</li>
+        <li>Soft costs appear only on B ($250k). Cyber appears only on B ($1.0M first party). Quake appears only on C ($5.0M).</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Field compare</h2>
+
+      <div class="row gap">
+        <h3>Building limit</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>$42.0M <span class="flag">$6.2M under TIV</span></dd></div>
+          <div><dt>B</dt><dd>$52.0M</dd></div>
+          <div><dt>C</dt><dd>$48.2M <span class="ok">matches TIV</span></dd></div>
+        </dl>
+      </div>
+
+      <div class="row conflict">
+        <h3>Form</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>Named peril <span class="flag">basic perils only</span></dd></div>
+          <div><dt>B</dt><dd>Special form (all risk)</dd></div>
+          <div><dt>C</dt><dd>Special form (all risk)</dd></div>
+        </dl>
+      </div>
+
+      <div class="row conflict">
+        <h3>AOP deductible</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>$25,000</dd></div>
+          <div><dt>B</dt><dd>$50,000</dd></div>
+          <div><dt>C</dt><dd>$100,000</dd></div>
+        </dl>
+      </div>
+
+      <div class="row conflict">
+        <h3>Wind and hail</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>2% of building plus BPP · $1.15M</dd></div>
+          <div><dt>B</dt><dd>5% of building plus BPP · $2.88M <span class="flag">$1.73M above A and C</span></dd></div>
+          <div><dt>C</dt><dd>2% of building plus BPP · $1.15M</dd></div>
+        </dl>
+      </div>
+
+      <div class="row gap">
+        <h3>Flood</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>Excluded <span class="flag">no flood</span></dd></div>
+          <div><dt>B</dt><dd>$2.5M sublimit <span class="flag">token vs TIV</span></dd></div>
+          <div><dt>C</dt><dd>Excluded <span class="flag">NFIP residual only</span></dd></div>
+        </dl>
+      </div>
+
+      <div class="row conflict">
+        <h3>Earthquake</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>Excluded</dd></div>
+          <div><dt>B</dt><dd>Excluded</dd></div>
+          <div><dt>C</dt><dd>$5.0M</dd></div>
+        </dl>
+      </div>
+
+      <div class="row gap">
+        <h3>Cyber</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>Excluded</dd></div>
+          <div><dt>B</dt><dd>$1.0M first party</dd></div>
+          <div><dt>C</dt><dd>Excluded</dd></div>
+        </dl>
+      </div>
+
+      <div class="row gap">
+        <h3>Business interruption</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>$12.0M · 12 months · 72-hour wait <span class="flag">$4.8M under TIV</span></dd></div>
+          <div><dt>B</dt><dd>$18.0M · 18 months · extra expense · 24-hour wait</dd></div>
+          <div><dt>C</dt><dd>$16.8M · 12 months · 72-hour wait <span class="ok">matches TIV</span></dd></div>
+        </dl>
+      </div>
+
+      <div class="row gap">
+        <h3>Ordinance or law</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>Excluded <span class="flag">no code upgrade</span></dd></div>
+          <div><dt>B</dt><dd>Coverage A and B · $1.0M</dd></div>
+          <div><dt>C</dt><dd>Coverage A only <span class="flag">undamaged portion only</span></dd></div>
+        </dl>
+      </div>
+
+      <div class="row gap">
+        <h3>Soft costs</h3>
+        <dl class="vals">
+          <div><dt>A</dt><dd>Excluded</dd></div>
+          <div><dt>B</dt><dd>$250,000</dd></div>
+          <div><dt>C</dt><dd>Excluded</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section>
+      <h2>Talk-track</h2>
+      <p>Open the compare, not the premiums. A is cheapest because it is $6.2M short on the building and named peril. Raise the holes that survive a Houston wind or flood year. Leave Harris County quake for the lender if they asked.</p>
+      <ul class="gaps">
+        <li>Ask whether they will sit with a $6.2M uninsured building on A, or pay C to match TIV, or buy B’s surplus limit.</li>
+        <li>Read the wind number in dollars. B’s 5% is about $1.73M more than A or C on the same storm.</li>
+        <li>Do not treat B’s $2.5M flood sublimit as a flood program. Park NFIP plus excess flood as a separate bind.</li>
+        <li>On a 1987 tilt-wall, ask whether a total-loss rebuild clears current Houston fire and wind code without ordinance Coverage B and C.</li>
+        <li>A’s BI is $4.8M light. If the WMS is down more than a year, A is the wrong form even if the building limit were fixed.</li>
+        <li>B’s $1.0M cyber is a bolt-on, not a tech program. If the warehouse management system is material, place cyber on its own.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Static phone demo · invented US commercial property quotes · no live carrier feed
+    </footer>
+  </main>
+</body>
+</html>
