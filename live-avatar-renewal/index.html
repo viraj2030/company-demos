@@ -111,6 +111,26 @@
     .state[data-mode="idle"],
     .state[data-mode="done"] { color: var(--muted); font-weight: 500; }
     .state[data-mode="listen"] { color: #6b6254; }
+    .ladder {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.3rem;
+      list-style: none;
+      margin: 0 0 0.55rem;
+      padding: 0;
+    }
+    .ladder li {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.38rem 0.2rem;
+      border-radius: 999px;
+      background: #e6e0d4;
+      color: var(--muted);
+    }
+    .ladder li.on { background: var(--live); color: #fff; }
     main { flex: 1; display: flex; flex-direction: column; gap: 0.65rem; min-height: 0; }
     .stage {
       background: var(--card);
@@ -299,11 +319,16 @@
     </header>
 
     <main>
+      <ol class="ladder" id="ladder" aria-label="Trust ladder">
+        <li data-k="watch">Watch</li>
+        <li data-k="correct">Correct</li>
+        <li data-k="outcome">Outcome</li>
+      </ol>
       <section class="stage" aria-live="polite">
         <div class="idle-copy" id="idleCopy">
           <h2>198,400 sf DC · Ontario, CA</h2>
           <p>One Inland Empire renewal. TIV moved, wildfire moved, incumbent is twitchy.</p>
-          <p>Tools fetch while we talk. Next never waits on them.</p>
+          <p>Watch the pull. Nudge the roof cert. Then take the talk-track.</p>
         </div>
         <div class="log hidden" id="log"></div>
       </section>
@@ -327,19 +352,9 @@
 
       <section class="outcome hidden" id="outcome">
         <h2>Renewal snapshot</h2>
-        <div class="delta">
-          <div><span>Premium</span><b>+8–12% if Harbor quotes</b></div>
-          <div><span>TIV</span><b>$68.2M → $79.6M</b></div>
-          <div><span>Wildfire</span><b>63 → 72</b></div>
-          <div><span>Need</span><b>roof cert · losses · SOV</b></div>
-        </div>
+        <div class="delta" id="delta"></div>
         <h2>Talk-track</h2>
-        <ol class="track" id="track">
-          <li>Open TIV, not premium. The extra $11.4M is shuttle stock, not a new building.</li>
-          <li>Read wildfire as ember. Score 72 is why Northline is 5% or out.</li>
-          <li>Roof is 14-year TPO. Harbor dies without the cert and the 22k coating invoice.</li>
-          <li>Ridge Surplus is the fail-safe, not the first call.</li>
-        </ol>
+        <ol class="track" id="track"></ol>
       </section>
     </main>
 
@@ -374,13 +389,6 @@
       }
     ];
 
-    const TRACK = [
-      "Open TIV, not premium. The extra $11.4M is shuttle stock, not a new building.",
-      "Read wildfire as ember. Score 72 is why Northline is 5% or out.",
-      "Roof is 14-year TPO. Harbor dies without the cert and the 22k coating invoice.",
-      "Ridge Surplus is the fail-safe, not the first call."
-    ].join("\n");
-
     const el = {
       app: document.getElementById("app"),
       avatar: document.getElementById("avatar"),
@@ -389,6 +397,8 @@
       log: document.getElementById("log"),
       bar: document.getElementById("bar"),
       outcome: document.getElementById("outcome"),
+      delta: document.getElementById("delta"),
+      track: document.getElementById("track"),
       tools: document.getElementById("tools"),
       hazardPill: document.getElementById("hazardPill"),
       hazardBody: document.getElementById("hazardBody"),
@@ -399,7 +409,36 @@
     let step = -1;
     let speaking = false;
     let advancing = false;
+    let nudged = false;
+    let hazardState = "idle";
+    let appetiteState = "idle";
     const timers = [];
+
+    function trackLines() {
+      return nudged ? [
+        "Open TIV, not premium. The extra $11.4M is shuttle stock, not a new building.",
+        "Read wildfire as ember. Score 72 is why Northline is 5% or out.",
+        "Roof cert is already in. Do not re-ask. Harbor can quote.",
+        "Still pull five-year losses and the shuttle SOV this week."
+      ] : [
+        "Open TIV, not premium. The extra $11.4M is shuttle stock, not a new building.",
+        "Read wildfire as ember. Score 72 is why Northline is 5% or out.",
+        "Roof is 14-year TPO. Harbor dies without the cert and the 22k coating invoice.",
+        "Ridge Surplus is the fail-safe, not the first call."
+      ];
+    }
+
+    function lineFor(i) {
+      if (nudged && i === 3) return "Northline still wants 5% or they walk. Harbor is quote-ready on the roof. Ridge is the 3% backup.";
+      if (nudged && i === 4) return "Cert is already in. Still need five-year losses, updated SOV, and the defensible-space page. Harbor can quote.";
+      return TALK[i].av;
+    }
+
+    function setPhase(name) {
+      document.querySelectorAll("#ladder li").forEach(function (li) {
+        li.classList.toggle("on", li.dataset.k === name);
+      });
+    }
 
     function later(fn, ms) {
       const id = setTimeout(fn, ms);
@@ -432,41 +471,78 @@
       pill.textContent = text;
     }
 
+    function fillHazard() {
+      hazardState = "ready";
+      setPill(el.hazardPill, "ready", "In");
+      el.hazardBody.className = "";
+      el.hazardBody.innerHTML =
+        "<div class=\"hazard-grid\">" +
+          "<div class=\"map\" aria-hidden=\"true\">" +
+            "<b></b><b></b><b class=\"w\"></b><b class=\"w\"></b>" +
+            "<b></b><b class=\"x\"></b><b class=\"w\"></b><b></b>" +
+            "<b></b><b></b><b></b><b></b>" +
+          "</div>" +
+          "<ul class=\"facts\">" +
+            "<li><span>Wildfire</span><b>72 · +9 YoY</b></li>" +
+            "<li><span>Hail</span><b>18 · quiet</b></li>" +
+            (nudged ? "<li><span>Roof</span><b>cert in</b></li>" : "<li><span>Site</span><b>0.4 mi WUI</b></li>") +
+          "</ul>" +
+        "</div>";
+    }
+
+    function fillAppetite() {
+      appetiteState = "ready";
+      setPill(el.appetitePill, "ready", "In");
+      el.appetiteBody.className = "chips";
+      el.appetiteBody.innerHTML = nudged
+        ? "<span class=\"chip tight\">Northline · 5% or out</span>" +
+          "<span class=\"chip open\">Harbor · quote ready</span>" +
+          "<span class=\"chip open\">Ridge · 3% surplus</span>"
+        : "<span class=\"chip tight\">Northline · 5% or out</span>" +
+          "<span class=\"chip open\">Harbor · open if roof</span>" +
+          "<span class=\"chip open\">Ridge · 3% surplus</span>";
+    }
+
     function startHazard() {
+      hazardState = "fetch";
       setPill(el.hazardPill, "fetch", "Fetching…");
       el.hazardBody.className = "load";
       el.hazardBody.textContent = "Pulling Ontario / San Bernardino wildfire + hail…";
-      later(function () {
-        setPill(el.hazardPill, "ready", "In");
-        el.hazardBody.className = "";
-        el.hazardBody.innerHTML =
-          "<div class=\"hazard-grid\">" +
-            "<div class=\"map\" aria-hidden=\"true\">" +
-              "<b></b><b></b><b class=\"w\"></b><b class=\"w\"></b>" +
-              "<b></b><b class=\"x\"></b><b class=\"w\"></b><b></b>" +
-              "<b></b><b></b><b></b><b></b>" +
-            "</div>" +
-            "<ul class=\"facts\">" +
-              "<li><span>Wildfire</span><b>72 · +9 YoY</b></li>" +
-              "<li><span>Hail</span><b>18 · quiet</b></li>" +
-              "<li><span>Site</span><b>0.4 mi WUI</b></li>" +
-            "</ul>" +
-          "</div>";
-      }, 1700);
+      later(fillHazard, 1700);
     }
 
     function startAppetite() {
+      appetiteState = "fetch";
       setPill(el.appetitePill, "fetch", "Fetching…");
       el.appetiteBody.className = "load";
       el.appetiteBody.textContent = "Scanning incumbent + two backups…";
+      later(fillAppetite, 2100);
+    }
+
+    function fillOutcome() {
+      const premium = nudged ? "+4–7% if Harbor quotes" : "+8–12% if Harbor quotes";
+      const need = nudged ? "losses · SOV · space note" : "roof cert · losses · SOV";
+      el.delta.innerHTML =
+        "<div><span>Premium</span><b>" + premium + "</b></div>" +
+        "<div><span>TIV</span><b>$68.2M → $79.6M</b></div>" +
+        "<div><span>Wildfire</span><b>63 → 72</b></div>" +
+        "<div><span>Need</span><b>" + need + "</b></div>";
+      el.track.innerHTML = trackLines().map(function (line) { return "<li>" + line + "</li>"; }).join("");
+    }
+
+    function nudge() {
+      if (nudged || step < 0 || TALK[step].end || advancing) return;
+      nudged = true;
+      setPhase("correct");
+      addBubble("me", "Nudge: roof cert is already in the file.");
+      setMode("talk", "Correcting · mock");
+      if (hazardState === "ready") fillHazard();
+      if (appetiteState === "ready") startAppetite();
+      renderBar();
       later(function () {
-        setPill(el.appetitePill, "ready", "In");
-        el.appetiteBody.className = "chips";
-        el.appetiteBody.innerHTML =
-          "<span class=\"chip tight\">Northline · 5% or out</span>" +
-          "<span class=\"chip open\">Harbor · open if roof</span>" +
-          "<span class=\"chip open\">Ridge · 3% surplus</span>";
-      }, 2100);
+        addBubble("av", "Noted. Harbor treats the roof as proven. Northline still wants 5%. Losses and SOV still gate the bind.");
+        setMode("listen", "Listening · your tap");
+      }, 550);
     }
 
     function renderBar() {
@@ -489,7 +565,7 @@
         copy.addEventListener("click", function () {
           function fallback() {
             const ta = document.createElement("textarea");
-            ta.value = TRACK;
+            ta.value = trackLines().join("\n");
             ta.setAttribute("readonly", "");
             ta.style.cssText = "position:fixed;left:-9999px";
             document.body.appendChild(ta);
@@ -504,7 +580,7 @@
             later(function () { copy.textContent = "Copy talk-track"; }, 1400);
           }
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(TRACK).then(function () { done(true); }).catch(function () { done(fallback()); });
+            navigator.clipboard.writeText(trackLines().join("\n")).then(function () { done(true); }).catch(function () { done(fallback()); });
           } else {
             done(fallback());
           }
@@ -517,17 +593,24 @@
         el.bar.appendChild(restart);
         return;
       }
+      const correct = document.createElement("button");
+      correct.className = "ghost";
+      correct.id = "nudgeBtn";
+      correct.textContent = nudged ? "Nudged · roof cert in" : "Nudge: roof cert in";
+      correct.disabled = nudged;
+      correct.addEventListener("click", nudge);
       const next = document.createElement("button");
       next.id = "nextBtn";
       next.textContent = TALK[step].chip;
       next.addEventListener("click", advance);
+      el.bar.appendChild(correct);
       el.bar.appendChild(next);
     }
 
     function sayCurrent() {
       speaking = true;
       setMode("talk", "Speaking · mock");
-      addBubble("av", TALK[step].av);
+      addBubble("av", lineFor(step));
       if (TALK[step].tool === "hazard") startHazard();
       if (TALK[step].tool === "appetite") startAppetite();
       later(function () {
@@ -535,6 +618,8 @@
         if (TALK[step].end) {
           setMode("done", "Walkthrough done");
           el.app.classList.add("done");
+          setPhase("outcome");
+          fillOutcome();
           el.outcome.classList.remove("hidden");
           el.outcome.scrollIntoView({ block: "start" });
         } else {
@@ -545,6 +630,7 @@
 
     function start() {
       step = 0;
+      setPhase("watch");
       el.idle.classList.add("hidden");
       el.log.classList.remove("hidden");
       el.log.innerHTML = "";
@@ -572,6 +658,10 @@
       step = -1;
       speaking = false;
       advancing = false;
+      nudged = false;
+      hazardState = "idle";
+      appetiteState = "idle";
+      setPhase("");
       el.log.innerHTML = "";
       el.log.classList.add("hidden");
       el.idle.classList.remove("hidden");
