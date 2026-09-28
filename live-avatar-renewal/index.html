@@ -412,8 +412,8 @@
       div.className = "bubble " + who;
       div.innerHTML = "<span class=\"tag\">" + (who === "av" ? "Avatar" : "You") + "</span>" + text;
       el.log.appendChild(div);
-      const keep = el.log.querySelectorAll(".bubble");
-      while (keep.length > 3) el.log.removeChild(keep[0]);
+      const extras = [...el.log.querySelectorAll(".bubble")].slice(0, -3);
+      extras.forEach((node) => node.remove());
     }
 
     function setPill(pill, kind, text) {
