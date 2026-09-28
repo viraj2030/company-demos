@@ -357,8 +357,7 @@
       },
       {
         av: "TIV $68.2M to $79.6M. Contents and a new shuttle aisle — not a new box. Roof is 14-year TPO. They recoated 22k after ponding last monsoon.",
-        chip: "What do markets care about?",
-        tool: "hazard"
+        chip: "What do markets care about?"
       },
       {
         av: "Markets price ember, not the tilt-wall. Wildfire 72, up nine. Hail is quiet. Quake is a lender line. Roof age is the argument.",
@@ -488,12 +487,27 @@
         copy.id = "copyBtn";
         copy.textContent = "Copy talk-track";
         copy.addEventListener("click", function () {
-          navigator.clipboard.writeText(TRACK).then(function () {
-            copy.textContent = "Copied";
+          function fallback() {
+            const ta = document.createElement("textarea");
+            ta.value = TRACK;
+            ta.setAttribute("readonly", "");
+            ta.style.cssText = "position:fixed;left:-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            let ok = false;
+            try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+            ta.remove();
+            return ok;
+          }
+          function done(ok) {
+            copy.textContent = ok ? "Copied" : "Copy failed";
             later(function () { copy.textContent = "Copy talk-track"; }, 1400);
-          }).catch(function () {
-            copy.textContent = "Copy failed";
-          });
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(TRACK).then(function () { done(true); }).catch(function () { done(fallback()); });
+          } else {
+            done(fallback());
+          }
         });
         const restart = document.createElement("button");
         restart.id = "restartBtn";
@@ -535,6 +549,7 @@
       el.log.classList.remove("hidden");
       el.log.innerHTML = "";
       sayCurrent();
+      startHazard();
       renderBar();
     }
 
