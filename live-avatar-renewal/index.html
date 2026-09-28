@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <title>Live Avatar · Sierra Gate renewal</title>
+  <style>
+    :root {
+      --bg: #efece6;
+      --card: #fffcf7;
+      --ink: #161616;
+      --muted: #5e5a53;
+      --line: #ddd6c8;
+      --live: #0c6b4a;
+      --live-soft: #d8f3e8;
+      --warn: #8a4b00;
+      --warn-bg: #fff1d6;
+      --tight: #8a1f11;
+      --tight-bg: #fde8e6;
+      --open: #145c38;
+      --open-bg: #def5e8;
+      --pulse: #1aa36d;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.4;
+      -webkit-text-size-adjust: 100%;
+    }
+    .app {
+      min-height: 100%;
+      max-width: 26.5rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: 0.7rem 0.75rem calc(0.7rem + env(safe-area-inset-bottom));
+    }
+    header {
+      display: flex;
+      gap: 0.7rem;
+      align-items: center;
+      padding: 0.15rem 0.15rem 0.7rem;
+    }
+    .avatar {
+      position: relative;
+      width: 3.4rem;
+      height: 3.4rem;
+      flex: 0 0 3.4rem;
+    }
+    .ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+    .avatar.talk .ring {
+      border-color: var(--pulse);
+      animation: pulse 1.1s ease-out infinite;
+    }
+    .avatar.listen .ring { border-color: #c4b89f; }
+    .face {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #1c2a24;
+      display: grid;
+      place-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .eyes { display: flex; gap: 0.42rem; }
+    .eyes i {
+      display: block;
+      width: 0.34rem;
+      height: 0.34rem;
+      border-radius: 50%;
+      background: #e8f7ef;
+    }
+    .avatar.talk .mouth {
+      position: absolute;
+      width: 0.55rem;
+      height: 0.22rem;
+      border-radius: 0 0 8px 8px;
+      background: #8fd6b5;
+      bottom: 0.85rem;
+      animation: talk 0.28s ease-in-out infinite alternate;
+    }
+    .who { min-width: 0; }
+    .kicker {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    h1 {
+      margin: 0.1rem 0 0;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+    .state {
+      margin: 0.15rem 0 0;
+      font-size: 0.85rem;
+      color: var(--live);
+      font-weight: 600;
+    }
+    .state[data-mode="idle"],
+    .state[data-mode="done"] { color: var(--muted); font-weight: 500; }
+    .state[data-mode="listen"] { color: #6b6254; }
+    .ladder {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.3rem;
+      list-style: none;
+      margin: 0 0 0.55rem;
+      padding: 0;
+    }
+    .ladder li {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.38rem 0.2rem;
+      border-radius: 999px;
+      background: #e6e0d4;
+      color: var(--muted);
+    }
+    .ladder li.on { background: var(--live); color: #fff; }
+    main { flex: 1; display: flex; flex-direction: column; gap: 0.65rem; min-height: 0; }
+    .stage {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0.8rem 0.8rem 0.7rem;
+    }
+    .app.done .stage { display: none; }
+    .app.done main { display: flex; flex-direction: column; }
+    .app.done .outcome { order: 1; }
+    .app.done .tools { order: 2; }
+    .log {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-height: 7.4rem;
+    }
+    .bubble {
+      max-width: 92%;
+      padding: 0.55rem 0.7rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+    .bubble.av { background: #f3eee4; }
+    .bubble.me {
+      align-self: flex-end;
+      background: var(--live-soft);
+    }
+    .bubble .tag {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.15rem;
+    }
+    .idle-copy h2 {
+      margin: 0 0 0.3rem;
+      font-size: 1.05rem;
+    }
+    .idle-copy p { margin: 0 0 0.45rem; font-size: 0.95rem; color: var(--ink); }
+    .idle-copy p:last-child { margin: 0; color: var(--muted); font-size: 0.88rem; }
+    .tools { display: grid; gap: 0.55rem; }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.65rem 0.7rem 0.7rem;
+    }
+    .panel-h {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.45rem;
+    }
+    .panel-h h2 { margin: 0; font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 0.18rem 0.4rem;
+      border-radius: 999px;
+      background: #ece7dc;
+      color: var(--muted);
+    }
+    .pill.fetch { background: #fff1d6; color: var(--warn); }
+    .pill.ready { background: var(--live-soft); color: var(--live); }
+    .wait, .load { margin: 0; font-size: 0.9rem; color: var(--muted); }
+    .load { color: var(--warn); }
+    .hazard-grid { display: grid; grid-template-columns: 4.4rem 1fr; gap: 0.65rem; align-items: center; }
+    .map {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+      width: 4.4rem;
+    }
+    .map b {
+      display: block;
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: #e6e0d4;
+    }
+    .map b.w { background: #e8a23a; }
+    .map b.x { background: #0c6b4a; }
+    .facts { margin: 0; padding: 0; list-style: none; font-size: 0.9rem; }
+    .facts li {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.6rem;
+      padding: 0.12rem 0;
+    }
+    .facts span { color: var(--muted); }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .chip {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 0.28rem 0.55rem;
+      font-size: 0.82rem;
+    }
+    .chip.open { background: var(--open-bg); border-color: transparent; color: var(--open); }
+    .chip.tight { background: var(--tight-bg); border-color: transparent; color: var(--tight); }
+    .outcome {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.75rem 0.75rem 0.65rem;
+    }
+    .outcome h2 { margin: 0 0 0.45rem; font-size: 1rem; }
+    .delta {
+      display: grid;
+      gap: 0.28rem;
+      margin: 0 0 0.65rem;
+      font-size: 0.92rem;
+    }
+    .delta div { display: flex; justify-content: space-between; gap: 0.6rem; }
+    .delta span { color: var(--muted); }
+    .track { margin: 0; padding-left: 1.1rem; font-size: 0.92rem; }
+    .track li { margin: 0 0 0.35rem; }
+    .bar {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: auto;
+      padding-top: 0.45rem;
+      background: var(--bg);
+      position: sticky;
+      bottom: 0;
+    }
+    .bar.row { grid-template-columns: 1fr 1fr; }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      min-height: 2.75rem;
+      padding: 0.65rem 0.8rem;
+      font: inherit;
+      font-weight: 650;
+      font-size: 1rem;
+      background: var(--live);
+      color: #fff;
+    }
+    button.ghost {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button:disabled { opacity: 0.45; }
+    button:focus-visible { outline: 3px solid #1aa36d; outline-offset: 2px; }
+    .hidden { display: none; }
+    footer {
+      margin: 0.35rem 0 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.96); opacity: 1; }
+      100% { transform: scale(1.12); opacity: 0.2; }
+    }
+    @keyframes talk {
+      from { transform: scaleX(0.7); }
+      to { transform: scaleX(1.15); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .avatar.talk .ring, .avatar.talk .mouth { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="avatar" id="avatar" data-mode="idle">
+        <div class="ring"></div>
+        <div class="face">
+          <div class="eyes"><i></i><i></i></div>
+          <div class="mouth"></div>
+        </div>
+      </div>
+      <div class="who">
+        <p class="kicker">Live Avatar · mock</p>
+        <h1>Sierra Gate Logistics</h1>
+        <p class="state" id="modeLabel" data-mode="idle">Idle · tap Start</p>
+      </div>
+    </header>
+
+    <main>
+      <ol class="ladder" id="ladder" aria-label="Trust ladder">
+        <li data-k="watch">Watch</li>
+        <li data-k="correct">Correct</li>
+        <li data-k="outcome">Outcome</li>
+      </ol>
+      <section class="stage" aria-live="polite">
+        <div class="idle-copy" id="idleCopy">
+          <h2>198,400 sf DC · Ontario, CA</h2>
+          <p>One Inland Empire renewal. TIV moved, wildfire moved, incumbent is twitchy.</p>
+          <p>Watch the pull. Nudge the roof cert. Then take the talk-track.</p>
+        </div>
+        <div class="log hidden" id="log"></div>
+      </section>
+
+      <section class="tools" id="tools">
+        <article class="panel" id="hazardPanel">
+          <div class="panel-h">
+            <h2>Hazard</h2>
+            <span class="pill" id="hazardPill">Idle</span>
+          </div>
+          <div class="wait" id="hazardBody">Waiting on a walkthrough start.</div>
+        </article>
+        <article class="panel" id="appetitePanel">
+          <div class="panel-h">
+            <h2>Appetite</h2>
+            <span class="pill" id="appetitePill">Idle</span>
+          </div>
+          <div class="wait" id="appetiteBody">Carrier scan not started.</div>
+        </article>
+      </section>
+
+      <section class="outcome hidden" id="outcome">
+        <h2>Renewal snapshot</h2>
+        <div class="delta" id="delta"></div>
+        <h2>Talk-track</h2>
+        <ol class="track" id="track"></ol>
+      </section>
+    </main>
+
+    <div class="bar" id="bar">
+      <button type="button" id="startBtn">Start walkthrough</button>
+    </div>
+    <footer>Fixtures only · no live Gemini · not a placement</footer>
+  </div>
+
+  <script>
+    const TALK = [
+      {
+        av: "Sierra Gate, Ontario. One renewal. TIV moved, the wildfire score moved, and the incumbent is twitchy. Three things change the bind.",
+        chip: "Walk the YoY"
+      },
+      {
+        av: "TIV $68.2M to $79.6M. Contents and a new shuttle aisle — not a new box. Roof is 14-year TPO. They recoated 22k after ponding last monsoon.",
+        chip: "What do markets care about?"
+      },
+      {
+        av: "Markets price ember, not the tilt-wall. Wildfire 72, up nine. Hail is quiet. Quake is a lender line. Roof age is the argument.",
+        chip: "Who will write it?",
+        tool: "appetite"
+      },
+      {
+        av: "Northline wants 5% wildfire or they walk. Harbor Mutual will look if we prove the roof. Ridge Surplus is the 3% backup.",
+        chip: "What do we need from them?"
+      },
+      {
+        av: "From them today: roof cert, coating invoice, five-year losses, updated SOV for the shuttle, one page on defensible space. Without those Harbor never quotes.",
+        end: true
+      }
+    ];
+
+    const el = {
+      app: document.getElementById("app"),
+      avatar: document.getElementById("avatar"),
+      mode: document.getElementById("modeLabel"),
+      idle: document.getElementById("idleCopy"),
+      log: document.getElementById("log"),
+      bar: document.getElementById("bar"),
+      outcome: document.getElementById("outcome"),
+      delta: document.getElementById("delta"),
+      track: document.getElementById("track"),
+      tools: document.getElementById("tools"),
+      hazardPill: document.getElementById("hazardPill"),
+      hazardBody: document.getElementById("hazardBody"),
+      appetitePill: document.getElementById("appetitePill"),
+      appetiteBody: document.getElementById("appetiteBody")
+    };
+
+    let step = -1;
+    let speaking = false;
+    let advancing = false;
+    let nudged = false;
+    let hazardState = "idle";
+    let appetiteState = "idle";
+    const timers = [];
+
+    function trackLines() {
+      return nudged ? [
+        "Open TIV, not premium. The extra $11.4M is shuttle stock, not a new building.",
+        "Read wildfire as ember. Score 72 is why Northline is 5% or out.",
+        "Roof cert is already in. Do not re-ask. Harbor can quote.",
+        "Still pull five-year losses and the shuttle SOV this week."
+      ] : [
+        "Open TIV, not premium. The extra $11.4M is shuttle stock, not a new building.",
+        "Read wildfire as ember. Score 72 is why Northline is 5% or out.",
+        "Roof is 14-year TPO. Harbor dies without the cert and the 22k coating invoice.",
+        "Ridge Surplus is the fail-safe, not the first call."
+      ];
+    }
+
+    function lineFor(i) {
+      if (nudged && i === 3) return "Northline still wants 5% or they walk. Harbor is quote-ready on the roof. Ridge is the 3% backup.";
+      if (nudged && i === 4) return "Cert is already in. Still need five-year losses, updated SOV, and the defensible-space page. Harbor can quote.";
+      return TALK[i].av;
+    }
+
+    function setPhase(name) {
+      document.querySelectorAll("#ladder li").forEach(function (li) {
+        li.classList.toggle("on", li.dataset.k === name);
+      });
+    }
+
+    function later(fn, ms) {
+      const id = setTimeout(fn, ms);
+      timers.push(id);
+      return id;
+    }
+
+    function clearTimers() {
+      while (timers.length) clearTimeout(timers.pop());
+    }
+
+    function setMode(mode, label) {
+      el.avatar.className = "avatar " + (mode === "talk" ? "talk" : mode === "listen" ? "listen" : "");
+      el.avatar.dataset.mode = mode;
+      el.mode.dataset.mode = mode;
+      el.mode.textContent = label;
+    }
+
+    function addBubble(who, text) {
+      const div = document.createElement("div");
+      div.className = "bubble " + who;
+      div.innerHTML = "<span class=\"tag\">" + (who === "av" ? "Avatar" : "You") + "</span>" + text;
+      el.log.appendChild(div);
+      const extras = [...el.log.querySelectorAll(".bubble")].slice(0, -3);
+      extras.forEach((node) => node.remove());
+    }
+
+    function setPill(pill, kind, text) {
+      pill.className = "pill" + (kind ? " " + kind : "");
+      pill.textContent = text;
+    }
+
+    function fillHazard() {
+      hazardState = "ready";
+      setPill(el.hazardPill, "ready", "In");
+      el.hazardBody.className = "";
+      el.hazardBody.innerHTML =
+        "<div class=\"hazard-grid\">" +
+          "<div class=\"map\" aria-hidden=\"true\">" +
+            "<b></b><b></b><b class=\"w\"></b><b class=\"w\"></b>" +
+            "<b></b><b class=\"x\"></b><b class=\"w\"></b><b></b>" +
+            "<b></b><b></b><b></b><b></b>" +
+          "</div>" +
+          "<ul class=\"facts\">" +
+            "<li><span>Wildfire</span><b>72 · +9 YoY</b></li>" +
+            "<li><span>Hail</span><b>18 · quiet</b></li>" +
+            (nudged ? "<li><span>Roof</span><b>cert in</b></li>" : "<li><span>Site</span><b>0.4 mi WUI</b></li>") +
+          "</ul>" +
+        "</div>";
+    }
+
+    function fillAppetite() {
+      appetiteState = "ready";
+      setPill(el.appetitePill, "ready", "In");
+      el.appetiteBody.className = "chips";
+      el.appetiteBody.innerHTML = nudged
+        ? "<span class=\"chip tight\">Northline · 5% or out</span>" +
+          "<span class=\"chip open\">Harbor · quote ready</span>" +
+          "<span class=\"chip open\">Ridge · 3% surplus</span>"
+        : "<span class=\"chip tight\">Northline · 5% or out</span>" +
+          "<span class=\"chip open\">Harbor · open if roof</span>" +
+          "<span class=\"chip open\">Ridge · 3% surplus</span>";
+    }
+
+    function startHazard() {
+      hazardState = "fetch";
+      setPill(el.hazardPill, "fetch", "Fetching…");
+      el.hazardBody.className = "load";
+      el.hazardBody.textContent = "Pulling Ontario / San Bernardino wildfire + hail…";
+      later(fillHazard, 1700);
+    }
+
+    function startAppetite() {
+      appetiteState = "fetch";
+      setPill(el.appetitePill, "fetch", "Fetching…");
+      el.appetiteBody.className = "load";
+      el.appetiteBody.textContent = "Scanning incumbent + two backups…";
+      later(fillAppetite, 2100);
+    }
+
+    function fillOutcome() {
+      const premium = nudged ? "+4–7% if Harbor quotes" : "+8–12% if Harbor quotes";
+      const need = nudged ? "losses · SOV · space note" : "roof cert · losses · SOV";
+      el.delta.innerHTML =
+        "<div><span>Premium</span><b>" + premium + "</b></div>" +
+        "<div><span>TIV</span><b>$68.2M → $79.6M</b></div>" +
+        "<div><span>Wildfire</span><b>63 → 72</b></div>" +
+        "<div><span>Need</span><b>" + need + "</b></div>";
+      el.track.innerHTML = trackLines().map(function (line) { return "<li>" + line + "</li>"; }).join("");
+    }
+
+    function nudge() {
+      if (nudged || step < 0 || TALK[step].end || advancing) return;
+      nudged = true;
+      setPhase("correct");
+      addBubble("me", "Nudge: roof cert is already in the file.");
+      setMode("talk", "Correcting · mock");
+      if (hazardState === "ready") fillHazard();
+      if (appetiteState === "ready") startAppetite();
+      renderBar();
+      later(function () {
+        addBubble("av", "Noted. Harbor treats the roof as proven. Northline still wants 5%. Losses and SOV still gate the bind.");
+        setMode("listen", "Listening · your tap");
+      }, 550);
+    }
+
+    function renderBar() {
+      el.bar.innerHTML = "";
+      el.bar.className = "bar";
+      if (step < 0) {
+        const b = document.createElement("button");
+        b.id = "startBtn";
+        b.textContent = "Start walkthrough";
+        b.addEventListener("click", start);
+        el.bar.appendChild(b);
+        return;
+      }
+      if (TALK[step].end) {
+        el.bar.className = "bar row";
+        const copy = document.createElement("button");
+        copy.className = "ghost";
+        copy.id = "copyBtn";
+        copy.textContent = "Copy talk-track";
+        copy.addEventListener("click", function () {
+          function fallback() {
+            const ta = document.createElement("textarea");
+            ta.value = trackLines().join("\n");
+            ta.setAttribute("readonly", "");
+            ta.style.cssText = "position:fixed;left:-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            let ok = false;
+            try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+            ta.remove();
+            return ok;
+          }
+          function done(ok) {
+            copy.textContent = ok ? "Copied" : "Copy failed";
+            later(function () { copy.textContent = "Copy talk-track"; }, 1400);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(trackLines().join("\n")).then(function () { done(true); }).catch(function () { done(fallback()); });
+          } else {
+            done(fallback());
+          }
+        });
+        const restart = document.createElement("button");
+        restart.id = "restartBtn";
+        restart.textContent = "Restart";
+        restart.addEventListener("click", reset);
+        el.bar.appendChild(copy);
+        el.bar.appendChild(restart);
+        return;
+      }
+      const correct = document.createElement("button");
+      correct.className = "ghost";
+      correct.id = "nudgeBtn";
+      correct.textContent = nudged ? "Nudged · roof cert in" : "Nudge: roof cert in";
+      correct.disabled = nudged;
+      correct.addEventListener("click", nudge);
+      const next = document.createElement("button");
+      next.id = "nextBtn";
+      next.textContent = TALK[step].chip;
+      next.addEventListener("click", advance);
+      el.bar.appendChild(correct);
+      el.bar.appendChild(next);
+    }
+
+    function sayCurrent() {
+      speaking = true;
+      setMode("talk", "Speaking · mock");
+      addBubble("av", lineFor(step));
+      if (TALK[step].tool === "hazard") startHazard();
+      if (TALK[step].tool === "appetite") startAppetite();
+      later(function () {
+        speaking = false;
+        if (TALK[step].end) {
+          setMode("done", "Walkthrough done");
+          el.app.classList.add("done");
+          setPhase("outcome");
+          fillOutcome();
+          el.outcome.classList.remove("hidden");
+          el.outcome.scrollIntoView({ block: "start" });
+        } else {
+          setMode("listen", "Listening · your tap");
+        }
+      }, 900);
+    }
+
+    function start() {
+      step = 0;
+      setPhase("watch");
+      el.idle.classList.add("hidden");
+      el.log.classList.remove("hidden");
+      el.log.innerHTML = "";
+      sayCurrent();
+      startHazard();
+      renderBar();
+    }
+
+    function advance() {
+      if (advancing || step < 0 || TALK[step].end) return;
+      advancing = true;
+      const reply = TALK[step].chip;
+      setMode("listen", "Heard you");
+      addBubble("me", reply);
+      later(function () {
+        step += 1;
+        sayCurrent();
+        renderBar();
+        advancing = false;
+      }, 280);
+    }
+
+    function reset() {
+      clearTimers();
+      step = -1;
+      speaking = false;
+      advancing = false;
+      nudged = false;
+      hazardState = "idle";
+      appetiteState = "idle";
+      setPhase("");
+      el.log.innerHTML = "";
+      el.log.classList.add("hidden");
+      el.idle.classList.remove("hidden");
+      el.outcome.classList.add("hidden");
+      el.app.classList.remove("done");
+      setMode("idle", "Idle · tap Start");
+      setPill(el.hazardPill, "", "Idle");
+      el.hazardBody.className = "wait";
+      el.hazardBody.textContent = "Waiting on a walkthrough start.";
+      setPill(el.appetitePill, "", "Idle");
+      el.appetiteBody.className = "wait";
+      el.appetiteBody.textContent = "Carrier scan not started.";
+      renderBar();
+    }
+
+    document.getElementById("startBtn").addEventListener("click", start);
+  </script>
+</body>
+</html>
