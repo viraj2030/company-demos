@@ -117,8 +117,11 @@
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 0.8rem 0.8rem 0.7rem;
-      min-height: 11.5rem;
     }
+    .app.done .stage { display: none; }
+    .app.done main { display: flex; flex-direction: column; }
+    .app.done .outcome { order: 1; }
+    .app.done .tools { order: 2; }
     .log {
       display: flex;
       flex-direction: column;
@@ -229,7 +232,15 @@
     .delta span { color: var(--muted); }
     .track { margin: 0; padding-left: 1.1rem; font-size: 0.92rem; }
     .track li { margin: 0 0 0.35rem; }
-    .bar { display: grid; gap: 0.45rem; padding-top: 0.15rem; }
+    .bar {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: auto;
+      padding-top: 0.45rem;
+      background: var(--bg);
+      position: sticky;
+      bottom: 0;
+    }
     .bar.row { grid-template-columns: 1fr 1fr; }
     button {
       appearance: none;
@@ -271,7 +282,7 @@
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="app" id="app">
     <header>
       <div class="avatar" id="avatar" data-mode="idle">
         <div class="ring"></div>
@@ -372,6 +383,7 @@
     ].join("\n");
 
     const el = {
+      app: document.getElementById("app"),
       avatar: document.getElementById("avatar"),
       mode: document.getElementById("modeLabel"),
       idle: document.getElementById("idleCopy"),
@@ -508,7 +520,9 @@
         speaking = false;
         if (TALK[step].end) {
           setMode("done", "Walkthrough done");
+          el.app.classList.add("done");
           el.outcome.classList.remove("hidden");
+          el.outcome.scrollIntoView({ block: "start" });
         } else {
           setMode("listen", "Listening · your tap");
         }
@@ -547,6 +561,7 @@
       el.log.classList.add("hidden");
       el.idle.classList.remove("hidden");
       el.outcome.classList.add("hidden");
+      el.app.classList.remove("done");
       setMode("idle", "Idle · tap Start");
       setPill(el.hazardPill, "", "Idle");
       el.hazardBody.className = "wait";
