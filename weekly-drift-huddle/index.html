@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Weekly Drift Huddle · Company OS</title>
+  <style>
+    :root {
+      --bg: #101210;
+      --card: #1b1f1c;
+      --ink: #f0eee6;
+      --muted: #9a9a90;
+      --line: #2c322c;
+      --cos: #2f9d6a;
+      --cos-soft: #1a3a2c;
+      --gold: #d4b36a;
+      --gold-soft: #3a3218;
+      --skill: #7eb6e0;
+      --routine: #c9a6dc;
+      --retire: #e0a070;
+      --drop: #d08078;
+      --ok: #8fd6b5;
+      --pulse: #3dbe84;
+      --bar: #101210;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #efece6;
+        --card: #fffcf7;
+        --ink: #161616;
+        --muted: #5e5a53;
+        --line: #ddd6c8;
+        --cos: #0c6b4a;
+        --cos-soft: #d8f3e8;
+        --gold: #8a4b00;
+        --gold-soft: #fff1d6;
+        --skill: #1f4e78;
+        --routine: #5c3d72;
+        --retire: #8a4b00;
+        --drop: #8a1f11;
+        --ok: #145c38;
+        --pulse: #1aa36d;
+        --bar: #efece6;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.4;
+      -webkit-text-size-adjust: 100%;
+    }
+    .app {
+      min-height: 100%;
+      max-width: 26.5rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: 0.7rem 0.75rem calc(0.7rem + env(safe-area-inset-bottom));
+    }
+    header {
+      display: flex;
+      gap: 0.7rem;
+      align-items: center;
+      padding: 0.15rem 0.15rem 0.65rem;
+    }
+    .avatar {
+      position: relative;
+      width: 3.4rem;
+      height: 3.4rem;
+      flex: 0 0 3.4rem;
+    }
+    .ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+    .avatar.talk .ring {
+      border-color: var(--pulse);
+      animation: pulse 1.1s ease-out infinite;
+    }
+    .avatar.listen .ring { border-color: #5a635c; }
+    @media (prefers-color-scheme: light) {
+      .avatar.listen .ring { border-color: #c4b89f; }
+    }
+    .face {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #1c2a24;
+      display: grid;
+      place-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .eyes { display: flex; gap: 0.42rem; }
+    .eyes i {
+      display: block;
+      width: 0.34rem;
+      height: 0.34rem;
+      border-radius: 50%;
+      background: #e8f7ef;
+    }
+    .avatar.talk .mouth {
+      position: absolute;
+      width: 0.55rem;
+      height: 0.22rem;
+      border-radius: 0 0 8px 8px;
+      background: #8fd6b5;
+      bottom: 0.85rem;
+      animation: talk 0.28s ease-in-out infinite alternate;
+    }
+    .who { min-width: 0; }
+    .kicker {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    h1 {
+      margin: 0.1rem 0 0;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+    .state {
+      margin: 0.15rem 0 0;
+      font-size: 0.85rem;
+      color: var(--cos);
+      font-weight: 600;
+    }
+    .state[data-mode="idle"],
+    .state[data-mode="done"] { color: var(--muted); font-weight: 500; }
+    .state[data-mode="listen"] { color: var(--muted); }
+    .ladder {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.3rem;
+      list-style: none;
+      margin: 0 0 0.5rem;
+      padding: 0;
+    }
+    .ladder li {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.38rem 0.2rem;
+      border-radius: 999px;
+      background: #242824;
+      color: var(--muted);
+    }
+    @media (prefers-color-scheme: light) {
+      .ladder li { background: #e6e0d4; }
+    }
+    .ladder li.on { background: var(--cos); color: #fff; }
+    .agenda {
+      display: flex;
+      gap: 0.28rem;
+      margin: 0 0 0.55rem;
+      padding: 0;
+      list-style: none;
+    }
+    .agenda li {
+      flex: 1;
+      height: 0.28rem;
+      border-radius: 99px;
+      background: #242824;
+    }
+    @media (prefers-color-scheme: light) {
+      .agenda li { background: #ddd6c8; }
+    }
+    .agenda li.on { background: var(--cos); }
+    .agenda li.now { background: var(--gold); }
+    main { flex: 1; display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; }
+    .stage {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 0.8rem 0.8rem 0.7rem;
+    }
+    .q-label {
+      margin: 0 0 0.35rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .idle-copy h2, .outcome h2, .review-head h2 {
+      margin: 0 0 0.3rem;
+      font-size: 1.05rem;
+    }
+    .idle-copy p, .review-head p { margin: 0 0 0.45rem; font-size: 0.95rem; }
+    .idle-copy p:last-child { margin: 0; color: var(--muted); font-size: 0.88rem; }
+    .log { display: flex; flex-direction: column; gap: 0.5rem; min-height: 5.6rem; }
+    .bubble {
+      max-width: 94%;
+      padding: 0.55rem 0.7rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+    .bubble.av { background: #222823; }
+    .bubble.me { align-self: flex-end; background: var(--cos-soft); }
+    @media (prefers-color-scheme: light) {
+      .bubble.av { background: #f3eee4; }
+    }
+    .bubble .tag {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.15rem;
+    }
+    .tray { display: grid; gap: 0.55rem; }
+    .review-head { padding: 0 0.1rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.7rem 0.75rem 0.7rem;
+    }
+    .card.forming { border-style: dashed; }
+    .card.flag { border-color: var(--gold); background: color-mix(in srgb, var(--gold-soft) 70%, var(--card)); }
+    .card.accepted, .card.edited { border-color: color-mix(in srgb, var(--cos) 45%, var(--line)); }
+    .card.rejected { opacity: 0.48; }
+    .card-h {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.45rem;
+      margin-bottom: 0.4rem;
+    }
+    .kind {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .kind.skill { color: var(--skill); }
+    .kind.routine { color: var(--routine); }
+    .kind.retire { color: var(--retire); }
+    .kind.unknown { color: var(--muted); }
+    .pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 0.16rem 0.4rem;
+      border-radius: 999px;
+      background: #242824;
+      color: var(--muted);
+    }
+    @media (prefers-color-scheme: light) {
+      .pill { background: #ece7dc; }
+    }
+    .pill.forming { background: var(--gold-soft); color: var(--gold); }
+    .pill.flag { background: var(--gold-soft); color: var(--gold); }
+    .pill.accepted, .pill.edited { background: var(--cos-soft); color: var(--ok); }
+    .pill.rejected { background: #3a2220; color: var(--drop); }
+    @media (prefers-color-scheme: light) {
+      .pill.rejected { background: #fde8e6; }
+    }
+    .card p { margin: 0; font-size: 0.92rem; }
+    .card textarea {
+      width: 100%;
+      min-height: 4.6rem;
+      resize: vertical;
+      font: inherit;
+      font-size: 0.92rem;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.5rem 0.55rem;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.55rem;
+    }
+    .actions button {
+      min-height: 2.15rem;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.82rem;
+      border-radius: 9px;
+    }
+    .actions .nudge { background: var(--gold); color: #1a1408; }
+    @media (prefers-color-scheme: light) {
+      .actions .nudge { color: #fff; background: var(--gold); }
+    }
+    .actions .drop { background: transparent; color: var(--drop); border: 1px solid var(--line); }
+    .outcome {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.8rem 0.8rem 0.7rem;
+    }
+    .outcome .lede { margin: 0 0 0.7rem; color: var(--muted); font-size: 0.9rem; }
+    .bucket { margin: 0 0 0.75rem; }
+    .bucket:last-child { margin-bottom: 0; }
+    .bucket h3 {
+      margin: 0 0 0.35rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .bucket ul { margin: 0; padding: 0; list-style: none; }
+    .bucket li {
+      padding: 0.45rem 0;
+      border-top: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+    .empty {
+      margin: 0;
+      padding: 0.6rem 0 0.2rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .bar {
+      display: grid;
+      gap: 0.45rem;
+      margin-top: auto;
+      padding-top: 0.45rem;
+      background: var(--bar);
+      position: sticky;
+      bottom: 0;
+    }
+    .bar.row { grid-template-columns: 1fr 1fr; }
+    .bar.row3 { grid-template-columns: 1fr 1fr 1fr; }
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      min-height: 2.75rem;
+      padding: 0.65rem 0.8rem;
+      font: inherit;
+      font-weight: 650;
+      font-size: 1rem;
+      background: var(--cos);
+      color: #fff;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button:disabled { opacity: 0.45; }
+    button:focus-visible { outline: 3px solid var(--pulse); outline-offset: 2px; }
+    .hidden { display: none; }
+    footer {
+      margin: 0.35rem 0 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.96); opacity: 1; }
+      100% { transform: scale(1.12); opacity: 0.2; }
+    }
+    @keyframes talk {
+      from { transform: scaleX(0.7); }
+      to { transform: scaleX(1.15); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .avatar.talk .ring, .avatar.talk .mouth { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="avatar" id="avatar" data-mode="idle">
+        <div class="ring"></div>
+        <div class="face">
+          <div class="eyes"><i></i><i></i></div>
+          <div class="mouth"></div>
+        </div>
+      </div>
+      <div class="who">
+        <p class="kicker">CoS · Front Desk · mock</p>
+        <h1>Weekly Drift Huddle</h1>
+        <p class="state" id="modeLabel" data-mode="idle">Idle · tap Start</p>
+      </div>
+    </header>
+
+    <main>
+      <ol class="ladder" id="ladder" aria-label="Trust ladder">
+        <li data-k="watch">Watch</li>
+        <li data-k="correct">Correct</li>
+        <li data-k="outcome">Outcome</li>
+      </ol>
+      <ol class="agenda" id="agenda" aria-label="Seven questions" hidden></ol>
+
+      <section class="stage" id="stage" aria-live="polite">
+        <div class="idle-copy" id="idleCopy">
+          <h2>15 minutes · pairs with Friday Reflect</h2>
+          <p>CoS walks Fenech’s seven questions. Drafts form while you watch. Then you keep, rewrite, or drop. Only corrected items stick.</p>
+          <p>Week of 29 Sep 2026 · Growth Brain rebuild. Fixtures only.</p>
+        </div>
+        <div class="log hidden" id="log"></div>
+      </section>
+
+      <section class="review-head hidden" id="reviewHead">
+        <h2>Correct the drafts</h2>
+        <p>Keep, rewrite, or drop. Pending and dropped items do not stick.</p>
+      </section>
+
+      <section class="tray" id="tray" aria-label="Proposed updates"></section>
+
+      <section class="outcome hidden" id="outcome"></section>
+    </main>
+
+    <div class="bar" id="bar">
+      <button type="button" id="startBtn">Start huddle</button>
+    </div>
+    <footer>Fixtures only · no live Notion · not a production CoS</footer>
+  </div>
+
+  <script>
+    const DRAFTS = [
+      {
+        id: "m1",
+        kind: "memory",
+        q: 1,
+        text: "Company OS is Viraj’s own-business operating system (Growth Brain). Six arenas stay separate. Friday Reflect closes the week; this huddle is the CoS memory pass."
+      },
+      {
+        id: "m2",
+        kind: "memory",
+        q: 2,
+        flag: true,
+        text: "When Viraj says ship, merge to main.",
+        suggested: "Ship means open a PR into Projects. Viraj approves. Agents never self-ship."
+      },
+      {
+        id: "r3",
+        kind: "retire",
+        q: 3,
+        text: "Retire the old factory: weekday standup, ship queue, and weekly fleet review (paused 29 Sep)."
+      },
+      {
+        id: "m4",
+        kind: "memory",
+        q: 4,
+        text: "Trust rule: Viraj approves. Cloud agents build in isolation. Nothing self-ships. Watch → correct → skill → then routine."
+      },
+      {
+        id: "m5",
+        kind: "memory",
+        q: 5,
+        text: "Next demo is the Account Memory Card."
+      },
+      {
+        id: "s6",
+        kind: "skill",
+        q: 6,
+        text: "Ship-brief → phone demo: idle screen, Watch / Correct / Outcome ladder, fixtures, README line, PR into Projects."
+      },
+      {
+        id: "u6",
+        kind: "routine",
+        q: 6,
+        text: "Daily 07:30 X mention sweep into Front Desk."
+      },
+      {
+        id: "o7",
+        kind: "unknown",
+        q: 7,
+        text: "Still unclear whether CoS drafts Friday Reflect, or only this huddle."
+      }
+    ];
+
+    const BEATS = [
+      {
+        q: 1,
+        title: "1 · Permanent context",
+        av: "This week I locked that Company OS is Growth Brain — six arenas, kept separate. Friday Reflect closes the week. This huddle is how I stop drifting.",
+        drafts: ["m1"],
+        chip: "Next · corrections"
+      },
+      {
+        q: 2,
+        title: "2 · Repeated corrections",
+        av: "You corrected me twice: ship does not mean merge. I still drafted it the old way. Flag it when we review.",
+        drafts: ["m2"],
+        chip: "Next · outdated"
+      },
+      {
+        q: 3,
+        title: "3 · Outdated info",
+        av: "I’m still holding the old factory — weekday standup, ship queue, weekly fleet review. Those were paused yesterday.",
+        drafts: ["r3"],
+        chip: "Next · decisions"
+      },
+      {
+        q: 4,
+        title: "4 · Decisions",
+        av: "Decision that changes how I operate: you approve, cloud agents build in isolation, nothing self-ships. Watch, then correct, then skill, then routine.",
+        drafts: ["m4"],
+        chip: "Next · misses"
+      },
+      {
+        q: 5,
+        title: "5 · Misunderstandings",
+        av: "I assumed Account Memory Card was next. That’s held. I also mixed a day-job note into Company OS — arenas stay separate.",
+        drafts: ["m5"],
+        chip: "Next · recurring"
+      },
+      {
+        q: 6,
+        title: "6 · Recurring work",
+        av: "Every ship-brief becoming a phone demo is a skill. I also drafted a daily X mention sweep. That looks like the old factory — drop it if I’m wrong.",
+        drafts: ["s6", "u6"],
+        chip: "Next · unknowns"
+      },
+      {
+        q: 7,
+        title: "7 · Remaining unknowns",
+        av: "Still unclear: do I draft Friday Reflect, or only this huddle? I will not invent a memory for that.",
+        drafts: ["o7"],
+        chip: "Review drafts"
+      }
+    ];
+
+    const KIND_LABEL = {
+      memory: "Memory",
+      skill: "Skill",
+      routine: "Routine",
+      retire: "Retire",
+      unknown: "Unknown"
+    };
+
+    const el = {
+      app: document.getElementById("app"),
+      avatar: document.getElementById("avatar"),
+      mode: document.getElementById("modeLabel"),
+      idle: document.getElementById("idleCopy"),
+      log: document.getElementById("log"),
+      stage: document.getElementById("stage"),
+      agenda: document.getElementById("agenda"),
+      tray: document.getElementById("tray"),
+      reviewHead: document.getElementById("reviewHead"),
+      outcome: document.getElementById("outcome"),
+      bar: document.getElementById("bar")
+    };
+
+    let phase = "idle";
+    let beat = -1;
+    let advancing = false;
+    let items = [];
+    const timers = [];
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function later(fn, ms) {
+      const id = setTimeout(fn, ms);
+      timers.push(id);
+      return id;
+    }
+
+    function clearTimers() {
+      while (timers.length) clearTimeout(timers.pop());
+    }
+
+    function setPhase(name) {
+      phase = name;
+      document.querySelectorAll("#ladder li").forEach(function (li) {
+        li.classList.toggle("on", li.dataset.k === name);
+      });
+    }
+
+    function setMode(mode, label) {
+      el.avatar.className = "avatar " + (mode === "talk" ? "talk" : mode === "listen" ? "listen" : "");
+      el.avatar.dataset.mode = mode;
+      el.mode.dataset.mode = mode;
+      el.mode.textContent = label;
+    }
+
+    function addBubble(who, text) {
+      const div = document.createElement("div");
+      div.className = "bubble " + who;
+      const tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = who === "av" ? "CoS" : "You";
+      div.appendChild(tag);
+      div.appendChild(document.createTextNode(text));
+      el.log.appendChild(div);
+      [...el.log.querySelectorAll(".bubble")].slice(0, -2).forEach(function (node) { node.remove(); });
+    }
+
+    function itemById(id) {
+      return items.find(function (it) { return it.id === id; });
+    }
+
+    function actedCount() {
+      return items.filter(function (it) { return it.status !== "draft" && it.status !== "forming"; }).length;
+    }
+
+    function stuckItems() {
+      return items.filter(function (it) { return it.status === "accepted" || it.status === "edited"; });
+    }
+
+    function buildAgenda() {
+      el.agenda.innerHTML = "";
+      BEATS.forEach(function (b, i) {
+        const li = document.createElement("li");
+        li.dataset.i = String(i);
+        el.agenda.appendChild(li);
+      });
+      el.agenda.hidden = false;
+    }
+
+    function paintAgenda() {
+      [...el.agenda.children].forEach(function (li, i) {
+        li.className = i < beat ? "on" : i === beat ? "now" : "";
+      });
+    }
+
+    function cardFor(item, interactive) {
+      const art = document.createElement("article");
+      art.className = "card " + item.status + (item.flag && item.status === "draft" ? " flag" : "");
+      art.dataset.id = item.id;
+
+      const head = document.createElement("div");
+      head.className = "card-h";
+      const kind = document.createElement("span");
+      kind.className = "kind " + item.kind;
+      kind.textContent = KIND_LABEL[item.kind] + " · Q" + item.q;
+      const pill = document.createElement("span");
+      const pillKind = item.status === "draft" && item.flag ? "flag" : item.status;
+      pill.className = "pill " + pillKind;
+      pill.textContent = item.status === "forming" ? "Drafting…"
+        : item.status === "draft" && item.flag ? "Looks off"
+        : item.status === "draft" ? "Draft"
+        : item.status === "accepted" ? "Kept"
+        : item.status === "edited" ? "Rewritten"
+        : "Dropped";
+      head.appendChild(kind);
+      head.appendChild(pill);
+      art.appendChild(head);
+
+      if (item.editing) {
+        const ta = document.createElement("textarea");
+        ta.value = item.text;
+        ta.id = "edit-" + item.id;
+        art.appendChild(ta);
+      } else {
+        const p = document.createElement("p");
+        p.textContent = item.text;
+        art.appendChild(p);
+      }
+
+      if (interactive && item.status !== "forming") {
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        if (item.editing) {
+          const save = document.createElement("button");
+          save.type = "button";
+          save.textContent = "Save rewrite";
+          save.addEventListener("click", function () {
+            const next = document.getElementById("edit-" + item.id).value.trim();
+            if (!next) return;
+            item.text = next;
+            item.editing = false;
+            item.status = "edited";
+            renderTray();
+            renderBar();
+          });
+          const cancel = document.createElement("button");
+          cancel.type = "button";
+          cancel.className = "ghost";
+          cancel.textContent = "Cancel";
+          cancel.addEventListener("click", function () {
+            item.editing = false;
+            renderTray();
+          });
+          actions.appendChild(save);
+          actions.appendChild(cancel);
+        } else if (item.status === "draft") {
+          if (item.suggested) {
+            const nudge = document.createElement("button");
+            nudge.type = "button";
+            nudge.className = "nudge";
+            nudge.id = "nudgeBtn";
+            nudge.textContent = "Rewrite: PR into Projects";
+            nudge.addEventListener("click", function () {
+              item.text = item.suggested;
+              item.status = "edited";
+              renderTray();
+              renderBar();
+            });
+            actions.appendChild(nudge);
+          }
+          const keep = document.createElement("button");
+          keep.type = "button";
+          keep.className = item.suggested ? "ghost" : "";
+          keep.textContent = "Keep";
+          keep.addEventListener("click", function () {
+            item.status = "accepted";
+            renderTray();
+            renderBar();
+          });
+          const edit = document.createElement("button");
+          edit.type = "button";
+          edit.className = "ghost";
+          edit.textContent = "Edit";
+          edit.addEventListener("click", function () {
+            item.editing = true;
+            renderTray();
+          });
+          const drop = document.createElement("button");
+          drop.type = "button";
+          drop.className = "drop";
+          drop.id = item.id === "u6" ? "dropRoutineBtn" : "";
+          drop.textContent = "Drop";
+          drop.addEventListener("click", function () {
+            item.status = "rejected";
+            renderTray();
+            renderBar();
+          });
+          actions.appendChild(keep);
+          actions.appendChild(edit);
+          actions.appendChild(drop);
+        } else {
+          const undo = document.createElement("button");
+          undo.type = "button";
+          undo.className = "ghost";
+          undo.textContent = "Undo";
+          undo.addEventListener("click", function () {
+            item.status = "draft";
+            if (item.id === "m2") item.text = "When Viraj says ship, merge to main.";
+            renderTray();
+            renderBar();
+          });
+          actions.appendChild(undo);
+        }
+        art.appendChild(actions);
+      }
+
+      return art;
+    }
+
+    function renderTray() {
+      el.tray.innerHTML = "";
+      const interactive = phase === "correct";
+      const visible = interactive
+        ? items.filter(function (it) { return it.status !== "forming"; })
+        : items.filter(function (it) { return it.revealed; }).slice(-3);
+      visible.forEach(function (it) { el.tray.appendChild(cardFor(it, interactive)); });
+    }
+
+    function revealDrafts(ids) {
+      ids.forEach(function (id) {
+        const it = itemById(id);
+        if (!it) return;
+        it.revealed = true;
+        it.status = "draft";
+      });
+      renderTray();
+    }
+
+    function sayBeat() {
+      const b = BEATS[beat];
+      el.stage.querySelector(".q-label") && el.stage.querySelector(".q-label").remove();
+      const q = document.createElement("p");
+      q.className = "q-label";
+      q.id = "qLabel";
+      q.textContent = b.title;
+      el.log.before(q);
+      setMode("talk", "Speaking · mock");
+      addBubble("av", b.av);
+      paintAgenda();
+      later(function () {
+        revealDrafts(b.drafts);
+        setMode("listen", beat === BEATS.length - 1 ? "Listening · review" : "Listening · your tap");
+      }, reduceMotion ? 0 : 700);
+    }
+
+    function start() {
+      items = DRAFTS.map(function (d) {
+        return {
+          id: d.id,
+          kind: d.kind,
+          q: d.q,
+          flag: !!d.flag,
+          suggested: d.suggested || "",
+          text: d.text,
+          status: "forming",
+          revealed: false,
+          editing: false
+        };
+      });
+      beat = 0;
+      advancing = false;
+      setPhase("watch");
+      el.idle.classList.add("hidden");
+      el.log.classList.remove("hidden");
+      el.log.innerHTML = "";
+      el.outcome.classList.add("hidden");
+      el.reviewHead.classList.add("hidden");
+      el.stage.classList.remove("hidden");
+      buildAgenda();
+      sayBeat();
+      renderBar();
+      if (!reduceMotion) {
+        later(function () { autoAdvance(); }, 2400);
+      }
+    }
+
+    function autoAdvance() {
+      if (phase !== "watch" || advancing || beat < 0 || beat >= BEATS.length - 1) return;
+      advance();
+    }
+
+    function advance() {
+      if (advancing || phase !== "watch" || beat < 0) return;
+      if (beat >= BEATS.length - 1) {
+        enterCorrect();
+        return;
+      }
+      advancing = true;
+      clearTimers();
+      addBubble("me", BEATS[beat].chip.replace(/^Next · /, "").replace(/^Review drafts$/, "Go on"));
+      later(function () {
+        beat += 1;
+        sayBeat();
+        renderBar();
+        advancing = false;
+        if (!reduceMotion && beat < BEATS.length - 1) {
+          later(autoAdvance, 2500);
+        }
+      }, 240);
+    }
+
+    function skipToReview() {
+      clearTimers();
+      advancing = false;
+      beat = BEATS.length - 1;
+      items.forEach(function (it) {
+        it.revealed = true;
+        it.status = "draft";
+      });
+      paintAgenda();
+      enterCorrect();
+    }
+
+    function enterCorrect() {
+      clearTimers();
+      setPhase("correct");
+      items.forEach(function (it) {
+        it.revealed = true;
+        if (it.status === "forming") it.status = "draft";
+      });
+      el.stage.classList.add("hidden");
+      el.reviewHead.classList.remove("hidden");
+      setMode("listen", "Your call · keep, rewrite, drop");
+      renderTray();
+      renderBar();
+      el.reviewHead.scrollIntoView({ block: "start" });
+    }
+
+    function bucketList(kind, title) {
+      const rows = stuckItems().filter(function (it) { return it.kind === kind; });
+      if (!rows.length) return "";
+      return "<div class=\"bucket\"><h3>" + title + "</h3><ul>" +
+        rows.map(function (it) { return "<li>" + escapeHtml(it.text) + "</li>"; }).join("") +
+        "</ul></div>";
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, function (c) {
+        return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c];
+      });
+    }
+
+    function fillOutcome() {
+      const stuck = stuckItems();
+      const dropped = items.filter(function (it) { return it.status === "rejected"; }).length;
+      const pending = items.filter(function (it) { return it.status === "draft"; }).length;
+      let html = "<h2>What changed in how I work with you</h2>";
+      if (!stuck.length) {
+        html += "<p class=\"empty\">Nothing stuck. Drift unchanged. Pending and dropped drafts were not written in.</p>";
+      } else {
+        html += "<p class=\"lede\">Only items you kept or rewrote. " +
+          dropped + " dropped · " + pending + " left pending.</p>";
+        html += bucketList("memory", "Memories saved");
+        html += bucketList("skill", "Skills proposed");
+        html += bucketList("routine", "Routines queued");
+        html += bucketList("retire", "Retired");
+        html += bucketList("unknown", "Still open");
+      }
+      el.outcome.innerHTML = html;
+    }
+
+    function finish() {
+      setPhase("outcome");
+      el.reviewHead.classList.add("hidden");
+      el.stage.classList.add("hidden");
+      el.tray.innerHTML = "";
+      fillOutcome();
+      el.outcome.classList.remove("hidden");
+      setMode("done", "Huddle closed · 15 min");
+      renderBar();
+      el.outcome.scrollIntoView({ block: "start" });
+    }
+
+    function renderBar() {
+      el.bar.innerHTML = "";
+      el.bar.className = "bar";
+      if (phase === "idle") {
+        const b = document.createElement("button");
+        b.id = "startBtn";
+        b.textContent = "Start huddle";
+        b.addEventListener("click", start);
+        el.bar.appendChild(b);
+        return;
+      }
+      if (phase === "watch") {
+        el.bar.className = "bar row";
+        const skip = document.createElement("button");
+        skip.className = "ghost";
+        skip.id = "skipBtn";
+        skip.textContent = "Skip to drafts";
+        skip.addEventListener("click", skipToReview);
+        const next = document.createElement("button");
+        next.id = "nextBtn";
+        next.textContent = BEATS[beat].chip;
+        next.addEventListener("click", advance);
+        el.bar.appendChild(skip);
+        el.bar.appendChild(next);
+        return;
+      }
+      if (phase === "correct") {
+        el.bar.className = "bar row";
+        const hint = document.createElement("button");
+        hint.className = "ghost";
+        hint.disabled = true;
+        hint.textContent = actedCount() ? actedCount() + " marked" : "Mark drafts";
+        const done = document.createElement("button");
+        done.id = "finishBtn";
+        done.textContent = "See what stuck";
+        done.addEventListener("click", finish);
+        el.bar.appendChild(hint);
+        el.bar.appendChild(done);
+        return;
+      }
+      const restart = document.createElement("button");
+      restart.id = "restartBtn";
+      restart.textContent = "Restart huddle";
+      restart.addEventListener("click", reset);
+      el.bar.appendChild(restart);
+    }
+
+    function reset() {
+      clearTimers();
+      phase = "idle";
+      beat = -1;
+      advancing = false;
+      items = [];
+      setPhase("");
+      el.agenda.innerHTML = "";
+      el.agenda.hidden = true;
+      el.log.innerHTML = "";
+      el.log.classList.add("hidden");
+      el.idle.classList.remove("hidden");
+      el.stage.classList.remove("hidden");
+      const q = document.getElementById("qLabel");
+      if (q) q.remove();
+      el.reviewHead.classList.add("hidden");
+      el.tray.innerHTML = "";
+      el.outcome.classList.add("hidden");
+      setMode("idle", "Idle · tap Start");
+      renderBar();
+    }
+
+    document.getElementById("startBtn").addEventListener("click", start);
+  </script>
+</body>
+</html>
