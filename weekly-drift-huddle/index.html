@@ -77,7 +77,10 @@
       position: absolute;
       inset: -4px;
       border-radius: 50%;
-      border: 2px solid transparent;
+      border: 2px solid #3a423c;
+    }
+    @media (prefers-color-scheme: light) {
+      .ring { border-color: #c4b89f; }
     }
     .avatar.talk .ring {
       border-color: var(--pulse);
@@ -218,7 +221,7 @@
       color: var(--muted);
       margin-bottom: 0.15rem;
     }
-    .tray { display: grid; gap: 0.55rem; }
+    .tray { display: grid; gap: 0.55rem; padding-bottom: 0.85rem; }
     .review-head { padding: 0 0.1rem; }
     .card {
       background: var(--card);
@@ -356,7 +359,7 @@
     }
     button:disabled { opacity: 0.45; }
     button:focus-visible { outline: 3px solid var(--pulse); outline-offset: 2px; }
-    .hidden { display: none; }
+    .hidden, .agenda[hidden] { display: none !important; }
     footer {
       margin: 0.35rem 0 0;
       font-size: 0.75rem;
@@ -571,10 +574,11 @@
       while (timers.length) clearTimeout(timers.pop());
     }
 
-    function setPhase(name) {
+    function setPhase(name, highlight) {
       phase = name;
+      const lit = highlight === undefined ? name : highlight;
       document.querySelectorAll("#ladder li").forEach(function (li) {
-        li.classList.toggle("on", li.dataset.k === name);
+        li.classList.toggle("on", li.dataset.k === lit);
       });
     }
 
@@ -738,7 +742,7 @@
           undo.textContent = "Undo";
           undo.addEventListener("click", function () {
             item.status = "draft";
-            if (item.id === "m2") item.text = "When Viraj says ship, merge to main.";
+            item.text = item.original;
             renderTray();
             renderBar();
           });
@@ -795,6 +799,7 @@
           flag: !!d.flag,
           suggested: d.suggested || "",
           text: d.text,
+          original: d.text,
           status: "forming",
           revealed: false,
           editing: false
@@ -911,6 +916,7 @@
       el.outcome.classList.remove("hidden");
       setMode("done", "Huddle closed · 15 min");
       renderBar();
+      el.agenda.hidden = true;
       el.outcome.scrollIntoView({ block: "start" });
     }
 
@@ -941,22 +947,17 @@
         return;
       }
       if (phase === "correct") {
-        el.bar.className = "bar row";
-        const hint = document.createElement("button");
-        hint.className = "ghost";
-        hint.disabled = true;
-        hint.textContent = actedCount() ? actedCount() + " marked" : "Mark drafts";
+        el.bar.className = "bar";
         const done = document.createElement("button");
         done.id = "finishBtn";
-        done.textContent = "See what stuck";
+        done.textContent = actedCount() ? "See what stuck · " + actedCount() : "See what stuck";
         done.addEventListener("click", finish);
-        el.bar.appendChild(hint);
         el.bar.appendChild(done);
         return;
       }
       const restart = document.createElement("button");
       restart.id = "restartBtn";
-      restart.textContent = "Restart huddle";
+      restart.textContent = "Restart";
       restart.addEventListener("click", reset);
       el.bar.appendChild(restart);
     }
@@ -967,7 +968,7 @@
       beat = -1;
       advancing = false;
       items = [];
-      setPhase("");
+      setPhase("idle", "");
       el.agenda.innerHTML = "";
       el.agenda.hidden = true;
       el.log.innerHTML = "";
