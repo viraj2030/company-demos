@@ -1,0 +1,370 @@
+:root {
+  --bg: #f3efe6;
+  --card: #fffdf8;
+  --ink: #1a1916;
+  --muted: #5c574e;
+  --line: #ddd6c6;
+  --accent: #1c4d3c;
+  --accent-soft: #d7efe4;
+  --warn: #7a3e00;
+  --warn-soft: #ffe8c8;
+  --bad: #8a1f11;
+  --bad-soft: #fde8e6;
+  --ok: #145c38;
+  --ok-soft: #d8f3e8;
+  --focus: #0b5fff;
+  --shadow: 0 1px 0 rgba(26, 25, 22, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121411;
+    --card: #1c1f1b;
+    --ink: #f0eee6;
+    --muted: #a8a49a;
+    --line: #2e332c;
+    --accent: #8fd6b5;
+    --accent-soft: #1a3328;
+    --warn: #f0c36a;
+    --warn-soft: #3a2e12;
+    --bad: #f0a090;
+    --bad-soft: #3a1c18;
+    --ok: #8fd6b5;
+    --ok-soft: #1a3a2c;
+    --focus: #7eb6ff;
+    --shadow: none;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html {
+  font-size: 17px;
+  overflow-x: hidden;
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+img, svg, video, canvas { max-width: 100%; }
+
+a {
+  color: var(--focus);
+  overflow-wrap: anywhere;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 12px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.progress {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: 0.55rem 1rem 0.65rem;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.progress-copy {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.progress-kicker {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.progress-track {
+  height: 8px;
+  margin-top: 0.4rem;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .progress-fill { transition: width 180ms ease; }
+}
+
+.hero,
+.app {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.1rem 1rem 0;
+}
+
+.hero {
+  padding-top: 1.25rem;
+  padding-bottom: 0.4rem;
+}
+
+.kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+h1, h2, h3, h4 {
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  margin: 0 0 0.55rem;
+  font-size: 1.85rem;
+}
+
+h2 {
+  margin: 0 0 0.45rem;
+  font-size: 1.35rem;
+}
+
+h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.08rem;
+}
+
+.lede,
+.kid,
+.grown,
+.who,
+.detail p,
+.quiz p,
+.card p {
+  margin: 0 0 0.7rem;
+}
+
+.lede { font-size: 1.05rem; }
+
+#start-btn,
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 650;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  #start-btn,
+  .primary {
+    color: #121411;
+  }
+}
+
+.chapter {
+  margin: 1.15rem 0 1.6rem;
+  padding-bottom: 0.2rem;
+}
+
+.chapter-head,
+.card,
+.widget,
+.quiz,
+.x-post,
+.glossary-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  margin: 0.75rem 0;
+  box-shadow: var(--shadow);
+}
+
+.badge {
+  display: inline-block;
+  margin: 0 0 0.45rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.row > button { flex: 1; }
+
+.muted { color: var(--muted); }
+
+.sources {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.hidden { display: none; }
+
+[hidden] { display: none !important; }
+
+.pipeline-step[aria-pressed="true"],
+.board-option[aria-pressed="true"],
+.bot-node[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.step-index {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+
+.detail {
+  margin-top: 0.65rem;
+  padding: 0.85rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+.pr-state {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+}
+
+.quiz-feedback[data-state="correct"] {
+  background: var(--ok-soft);
+  color: var(--ok);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+}
+
+.quiz-feedback[data-state="wrong"] {
+  background: var(--bad-soft);
+  color: var(--bad);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-height: 44px;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.check-row:last-child { border-bottom: 0; }
+
+.check-row input {
+  width: 22px;
+  height: 22px;
+  margin: 0.15rem 0 0;
+  flex: 0 0 22px;
+}
+
+.check-why {
+  display: block;
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-top: 0.15rem;
+}
+
+.x-post blockquote {
+  margin: 0 0 0.65rem;
+  padding: 0 0 0 0.75rem;
+  border-left: 3px solid var(--accent);
+}
+
+.glossary-filter {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 0.65rem 0.8rem;
+  margin: 0.4rem 0 0.75rem;
+}
+
+.org {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.footnote {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 1.5rem 0 2.2rem;
+}
+
+@media (min-width: 720px) {
+  h1 { font-size: 2.1rem; }
+  .hero, .app, .progress { padding-left: 1.25rem; padding-right: 1.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
