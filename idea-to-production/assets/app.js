@@ -585,7 +585,26 @@
     const chips = D.prScenarios.map((s) => `
       <button type="button" class="pr-scenario" data-testid="pr-scenario" data-scenario="${s.id}" aria-pressed="${s.id === sc.id ? "true" : "false"}">${esc(s.title)}</button>`).join("");
     const blocked = Boolean(st.fixes) && !runtime.pr.fixed;
-    const fixes = (st.fixes && !runtime.pr.fixed) ? st.fixes.map((f) => `
+    return `<section class="widget" data-testid="pr-lab">
+      <h3>PR lab</h3>
+      <p class="kid">Pick a path. Some paths break. Pick the fix.</p>
+      <div class="chips">${chips}</div>
+      <div data-testid="pr-sim">
+        <p data-testid="pr-sim-step" class="pr-state" data-step="${runtime.pr.index}" data-status="${st.status}"><span class="status-dot"></span>${esc(st.label)}</p>
+        <div class="detail">${prDetailHtml(st)}</div>
+        <div class="row">
+          <button type="button" data-testid="pr-sim-back">Back</button>
+          <button type="button" data-testid="pr-sim-next" ${blocked ? 'aria-disabled="true"' : ""}>Next</button>
+          <button type="button" data-testid="pr-sim-reset">Reset</button>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function prDetailHtml(st) {
+    const sc = currentPr();
+    const picking = Boolean(st.fixes) && !runtime.pr.fixed;
+    const fixes = picking ? st.fixes.map((f) => `
       <button type="button" data-testid="pr-fix-option" data-correct="${f.correct ? "true" : "false"}">${esc(f.text)}</button>`).join("") : "";
     const fb = runtime.pr.feedback
       ? `<p data-testid="pr-fix-feedback" class="pr-fix-feedback" data-state="${runtime.pr.feedback.state}">${esc(runtime.pr.feedback.why)}</p>`
@@ -596,25 +615,8 @@
     const toggle = sc.id === "bugbot-neutral"
       ? `<label class="check-row"><input type="checkbox" data-testid="bugbot-fail-toggle" ${runtime.pr.failOn ? "checked" : ""} /><span>Bugbot fails on unresolved findings</span></label>`
       : "";
-    return `<section class="widget" data-testid="pr-lab">
-      <h3>PR lab</h3>
-      <p class="kid">Pick a path. Some paths break. Pick the fix.</p>
-      <div class="chips">${chips}</div>
-      <div data-testid="pr-sim">
-        <p data-testid="pr-sim-step" class="pr-state" data-step="${runtime.pr.index}" data-status="${st.status}"><span class="status-dot"></span>${esc(st.label)}</p>
-        <div class="detail">
-          <p>${esc(st.kid)}</p>
-          <p>${esc(st.grownUp)}</p>
-          <p class="who"><strong>Who.</strong> ${esc(st.actor)}</p>
-          ${toggle}${mergeEl}${fixes ? `<div class="stack">${fixes}</div>` : ""}${fb}
-        </div>
-        <div class="row">
-          <button type="button" data-testid="pr-sim-back">Back</button>
-          <button type="button" data-testid="pr-sim-next" ${blocked ? 'aria-disabled="true"' : ""}>Next</button>
-          <button type="button" data-testid="pr-sim-reset">Reset</button>
-        </div>
-      </div>
-    </section>`;
+    const grown = picking ? "" : `<p>${esc(st.grownUp)}</p>`;
+    return `${fixes ? `<div class="stack">${fixes}</div>` : ""}${fb}<p>${esc(st.kid)}</p>${grown}<p class="who"><strong>Who.</strong> ${esc(st.actor)}</p>${toggle}${mergeEl}`;
   }
 
   function simOutcome() {
@@ -635,22 +637,20 @@
         <button type="button" class="primary" data-testid="sim-start">Start a project</button>
       </section>`;
     }
+    const meterMax = { days: 20, cost: 250, risk: 12, signal: 12 };
     const meters = ["days", "cost", "risk", "signal"].map((k) => {
       const raw = k === "risk" ? Math.max(0, sim.meters.risk) : sim.meters[k];
-      return `<div class="meter-row"><span>${k}</span><div class="meter-bar"><div class="meter-fill" style="width:${Math.min(100, Math.abs(raw) * (k === "cost" ? 0.3 : 8))}%"></div></div><strong data-testid="sim-meter" data-meter="${k}" data-value="${raw}">${raw}</strong></div>`;
+      const pct = Math.min(100, (Math.abs(raw) / meterMax[k]) * 100);
+      return `<div class="meter-row"><span>${k}</span><div class="meter-bar"><div class="meter-fill" style="width:${pct}%"></div></div><strong data-testid="sim-meter" data-meter="${k}" data-value="${raw}">${raw}</strong></div>`;
     }).join("");
-    const chartItems = ["days", "cost", "risk", "signal"].map((k) => ({
-      label: k, value: k === "risk" ? Math.max(0, sim.meters.risk) : Math.max(0, sim.meters[k]), testid: "sim-bar"
-    }));
     if (sim.outcome) {
       const out = D.sim.outcomes.find((o) => o.id === sim.outcome);
       return `<section class="widget" data-testid="sim">
-        <div data-testid="sim-chart">${CH.barChart(chartItems, { label: `Outcome meters, cost ${sim.meters.cost}, risk ${Math.max(0, sim.meters.risk)}` })}</div>
-        ${meters}
+        <div data-testid="sim-chart">${meters}</div>
         <div data-testid="sim-outcome" data-outcome="${sim.outcome}">
           <h3 class="outcome-title">${esc(out.title)}</h3>
           <p>${esc(out.kid)}</p>
-          <p>Your path: ${sim.path.map((p) => p.label || p.opt).join(". ")}</p>
+          <p>Your path: ${pathSentence(sim.path)}</p>
           <p><a href="#${out.chapter}">Open the chapter that teaches the fix</a></p>
         </div>
         <button type="button" data-testid="sim-restart">Start over</button>
@@ -662,8 +662,7 @@
     const chosen = sim.chosen ? `<p>${esc(sim.chosen.consequence)}</p><button type="button" data-testid="sim-continue">Continue</button>` : "";
     return `<section class="widget" data-testid="sim">
       <p class="muted">Teaching model, not measured. Costs use the routine calculator's example numbers.</p>
-      <div data-testid="sim-chart">${CH.barChart(chartItems, { label: "Simulator meters for days, cost, risk, signal" })}</div>
-      ${meters}
+      <div data-testid="sim-chart">${meters}</div>
       <div data-testid="sim-step" data-step-id="${step.id}">
         <h3>${esc(step.q)}</h3>
         <p class="kid">${esc(step.kid)}</p>
@@ -671,6 +670,13 @@
         ${chosen}
       </div>
     </section>`;
+  }
+
+  function pathSentence(path) {
+    const bits = path
+      .map((p) => String(p.label || p.opt).trim().replace(/[.?!]+$/g, ""))
+      .filter(Boolean);
+    return bits.length ? `${bits.join(". ")}.` : "";
   }
 
   function renderTree(id) {
@@ -913,11 +919,11 @@
     if (fill) fill.style.width = `${pct}%`;
     if (text) text.textContent = `${pct} percent`;
     const mini = document.getElementById("mini-radar");
-    if (mini) mini.innerHTML = CH.radarChart(mastery(), { size: 72, label: `Mini radar ${pct} percent` });
+    if (mini) mini.innerHTML = CH.radarChart(mastery(), { size: 72, labels: false, label: `Mini radar ${pct} percent` });
     const n = dueReviews().length;
     document.querySelectorAll("[data-testid=review-count]").forEach((el) => {
       el.setAttribute("data-value", String(n));
-      el.textContent = `${n} due`;
+      el.textContent = String(n);
     });
     const axes = document.querySelectorAll("[data-testid=mastery-axis]");
     if (axes.length) {
@@ -949,7 +955,8 @@
       { title: "Expert", ids: D.levels[2].chapterIds },
       { title: "Reference", ids: D.chapters.filter((c) => !c.level).map((c) => c.id) }
     ];
-    nav.innerHTML = groups.map((g) => `<p class="nav-group">${g.title}</p>` + g.ids.map((id) => {
+    const host = document.getElementById("chapter-nav-links") || nav;
+    host.innerHTML = groups.map((g) => `<p class="nav-group">${g.title}</p>` + g.ids.map((id) => {
       const ch = chapterById(id);
       return `<a class="chapter-nav-link" data-testid="chapter-nav-link" href="#${id}" data-chapter="${id}">${state.done[id] ? "✓ " : ""}${esc(ch.title)}</a>`;
     }).join("")).join("");
@@ -1023,18 +1030,7 @@
     }
     const detail = host.querySelector(".detail");
     if (!detail) { paintPrLab(); return; }
-    const fixes = (st.fixes && !runtime.pr.fixed) ? st.fixes.map((f) => `
-      <button type="button" data-testid="pr-fix-option" data-correct="${f.correct ? "true" : "false"}">${esc(f.text)}</button>`).join("") : "";
-    const fb = runtime.pr.feedback
-      ? `<p data-testid="pr-fix-feedback" class="pr-fix-feedback" data-state="${runtime.pr.feedback.state}">${esc(runtime.pr.feedback.why)}</p>`
-      : "";
-    const mergeEl = (sc.id === "bugbot-neutral" && st.mergeGate)
-      ? `<p data-testid="pr-merge-blocked" data-value="${runtime.pr.failOn ? "true" : "false"}">${runtime.pr.failOn ? "Merge is blocked. Fail-on-unresolved is on." : "Merge is not blocked. Findings are still neutral."}</p>`
-      : "";
-    const toggle = sc.id === "bugbot-neutral"
-      ? `<label class="check-row"><input type="checkbox" data-testid="bugbot-fail-toggle" ${runtime.pr.failOn ? "checked" : ""} /><span>Bugbot fails on unresolved findings</span></label>`
-      : "";
-    detail.innerHTML = `<p>${esc(st.kid)}</p><p>${esc(st.grownUp)}</p><p class="who"><strong>Who.</strong> ${esc(st.actor)}</p>${toggle}${mergeEl}${fixes ? `<div class="stack">${fixes}</div>` : ""}${fb}`;
+    detail.innerHTML = prDetailHtml(st);
   }
 
   function setStat(id, value, text) {
@@ -1171,6 +1167,9 @@
     if (tog) tog.setAttribute("aria-expanded", "false");
     const box = document.getElementById("search-results");
     if (box) box.hidden = true;
+    const search = document.getElementById("search-input");
+    if (search) search.value = "";
+    runtime.search = "";
   }
 
   function bindApp(app) {

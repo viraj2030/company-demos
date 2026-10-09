@@ -42,7 +42,7 @@ html {
   font-size: 17px;
   overflow-x: clip;
   background: var(--bg);
-  scroll-padding-top: 10rem;
+  scroll-padding-top: 5.5rem;
 }
 
 body {
@@ -87,7 +87,7 @@ button, select, input:not([type="hidden"]):not([type="checkbox"]), textarea {
   padding: 0.7rem 0.9rem;
   text-align: left;
   cursor: pointer;
-  scroll-margin-top: 10rem;
+  scroll-margin-top: 5.5rem;
 }
 
 input[type="number"],
@@ -141,14 +141,15 @@ a:focus-visible {
 }
 
 .progress {
-  padding: 0.45rem 1rem 0.2rem;
+  padding: 0;
+  min-width: 0;
 }
 
 .progress-copy {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
-  font-size: 0.85rem;
+  gap: 0.4rem;
+  font-size: 0.72rem;
   color: var(--muted);
 }
 
@@ -158,8 +159,8 @@ a:focus-visible {
 }
 
 .progress-track {
-  height: 8px;
-  margin-top: 0.35rem;
+  height: 6px;
+  margin-top: 0.2rem;
   background: var(--line);
   border-radius: 999px;
   overflow: hidden;
@@ -173,19 +174,11 @@ a:focus-visible {
 
 .sticky-tools {
   display: grid;
-  grid-template-columns: 48px auto 1fr auto;
-  grid-template-areas:
-    "radar review . jump"
-    "search search search search";
-  gap: 0.4rem;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  gap: 0.35rem;
   align-items: center;
-  padding: 0.4rem 1rem 0.55rem;
+  padding: 0.35rem 0.75rem;
 }
-
-.sticky-tools .icon-btn { grid-area: radar; }
-.sticky-tools .review-chip { grid-area: review; }
-.sticky-tools .search-wrap { grid-area: search; }
-.sticky-tools #chapter-nav-toggle { grid-area: jump; }
 
 .icon-btn {
   display: inline-flex;
@@ -203,29 +196,23 @@ a:focus-visible {
   overflow-wrap: normal;
 }
 
-.mini-radar { display: block; width: 36px; height: 36px; }
+.mini-radar { display: block; width: 36px; height: 36px; overflow: hidden; }
 .mini-radar svg { width: 36px; height: 36px; }
 
-.review-chip {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-}
-
-.review-chip span {
-  font-size: 0.78rem;
-  color: var(--muted);
-  line-height: 1.2;
-  white-space: nowrap;
-}
+.review-chip { min-width: 0; }
 
 .review-chip button {
   min-height: 44px;
-  padding: 0.35rem 0.7rem;
+  padding: 0.35rem 0.6rem;
   text-align: center;
   white-space: nowrap;
+}
+
+.review-chip [data-testid="review-count"] {
+  display: inline-block;
+  margin-left: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 .search-wrap { min-width: 0; }
@@ -306,7 +293,7 @@ h3 { margin: 0 0 0.4rem; font-size: 1.08rem; }
 }
 
 .chapter, .widget {
-  scroll-margin-top: 10rem;
+  scroll-margin-top: 5.5rem;
 }
 
 .chapter {
@@ -371,6 +358,10 @@ h3 { margin: 0 0 0.4rem; font-size: 1.08rem; }
 }
 
 .pr-state { font-size: 1.15rem; font-weight: 700; margin: 0 0 0.35rem; }
+[data-testid="pr-lab"] > .kid { margin-bottom: 0.4rem; }
+[data-testid="pr-lab"] .chips { margin: 0.25rem 0 0.45rem; }
+[data-testid="pr-lab"] .detail { margin-top: 0.4rem; padding: 0.65rem; }
+[data-testid="pr-fix-option"] { line-height: 1.3; }
 
 .quiz-feedback[data-state="correct"],
 .pr-fix-feedback[data-state="correct"] {
@@ -526,7 +517,7 @@ th, td { border-bottom: 1px solid var(--line); padding: 0.55rem 0.4rem; text-ali
 
 @media (min-width: 720px) {
   h1 { font-size: 2.1rem; }
-  .hero, .app, .progress, .sticky-tools, .search-results, #chapter-nav { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .hero, .app, .sticky-tools, .search-results, #chapter-nav { padding-left: 1.25rem; padding-right: 1.25rem; }
   .compare { grid-template-columns: 1fr 1fr; }
 }
 
