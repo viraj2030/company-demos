@@ -87,7 +87,7 @@
       return `
         <line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"></line>
         <text x="${lx}" y="${ly}" text-anchor="middle" font-size="9" fill="currentColor">${esc(axis.label || axis.skill)}</text>
-        <g data-testid="mastery-axis" data-skill="${esc(axis.skill)}" data-earned="${esc(axis.earned)}" data-possible="${esc(axis.possible)}" data-score="${esc(axis.score)}">
+        <g ${opts.axes ? `data-testid="mastery-axis" data-skill="${esc(axis.skill)}" data-earned="${esc(axis.earned)}" data-possible="${esc(axis.possible)}" data-score="${esc(axis.score)}"` : `data-skill="${esc(axis.skill)}"`}>
           <circle cx="${cx + Math.cos(a) * r * ((Number(axis.score) || 0) / 100)}" cy="${cy + Math.sin(a) * r * ((Number(axis.score) || 0) / 100)}" r="3" fill="var(--accent)"></circle>
         </g>`;
     }).join("");

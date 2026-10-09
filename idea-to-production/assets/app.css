@@ -40,9 +40,9 @@
 
 html {
   font-size: 17px;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--bg);
-  scroll-padding-top: 8.5rem;
+  scroll-padding-top: 11rem;
 }
 
 body {
@@ -87,6 +87,7 @@ button, select, input:not([type="hidden"]), textarea {
   padding: 0.7rem 0.9rem;
   text-align: left;
   cursor: pointer;
+  scroll-margin-top: 11rem;
 }
 
 input[type="number"],
@@ -280,6 +281,10 @@ h3 { margin: 0 0 0.4rem; font-size: 1.08rem; }
 
 @media (prefers-color-scheme: dark) {
   #start-btn, .primary { color: #121411; }
+}
+
+.chapter, .widget {
+  scroll-margin-top: 11rem;
 }
 
 .chapter {

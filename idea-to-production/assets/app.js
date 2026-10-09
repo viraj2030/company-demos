@@ -329,7 +329,7 @@
 
   function renderRadar(full) {
     const axes = mastery();
-    const svg = CH.radarChart(axes, { testid: full ? "mastery-radar" : undefined, size: full ? 300 : 72, label: `Mastery radar, mean ${meanScore()} percent` });
+    const svg = CH.radarChart(axes, { testid: full ? "mastery-radar" : undefined, size: full ? 300 : 72, axes: full, label: `Mastery radar, mean ${meanScore()} percent` });
     if (!full) return svg;
     return `<section class="widget" id="mastery-radar-wrap">
       <h3>Mastery radar</h3>
@@ -747,7 +747,7 @@
         <label class="field-label" for="certificate-name">Name</label>
         <input id="certificate-name" data-testid="certificate-name" type="text" value="${esc(state.certName || "Viraj")}" />
         <p>${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][new Date().getMonth()]} ${new Date().getDate()} ${new Date().getFullYear()}</p>
-        ${CH.radarChart(axes, { size: 240, label: `Certificate radar, mean ${meanScore()} percent` })}
+        ${CH.radarChart(axes, { size: 240, axes: true, label: `Certificate radar, mean ${meanScore()} percent` })}
         ${axes.map((a) => `<p data-testid="certificate-skill" data-skill="${a.skill}" data-score="${a.score}">${esc(a.label)}: ${a.score}</p>`).join("")}
       </div>` : `<p>No certificate. Review: ${D.exam.filter((q, i) => !ex.answers[i]).map((q) => {
         const ch = D.chapters.find((c) => c.skill === q.skill);
@@ -991,11 +991,116 @@
 
   function replaceWidget(rootSel, html) {
     const root = document.querySelector(rootSel);
-    if (!root) return;
+    if (!root || !root.parentNode) return;
     const wrap = document.createElement("div");
     wrap.innerHTML = html.trim();
     const next = wrap.firstElementChild;
-    if (next) root.replaceWith(next);
+    if (next && root.parentNode) root.replaceWith(next);
+  }
+
+  function paintPrLab() {
+    const host = document.querySelector("[data-testid=pr-lab]");
+    if (!host) return;
+    const wrap = document.createElement("div");
+    wrap.innerHTML = renderPrLab().trim();
+    const next = wrap.firstElementChild;
+    if (next) host.innerHTML = next.innerHTML;
+  }
+
+  function paintPrLabSoft() {
+    const host = document.querySelector("[data-testid=pr-lab]");
+    const label = host && host.querySelector("[data-testid=pr-sim-step]");
+    if (!label) { paintPrLab(); return; }
+    const sc = currentPr();
+    const st = sc.states[runtime.pr.index];
+    label.setAttribute("data-step", String(runtime.pr.index));
+    label.setAttribute("data-status", st.status);
+    label.innerHTML = `<span class="status-dot"></span>${esc(st.label)}`;
+    const blocked = Boolean(st.fixes) && !runtime.pr.fixed;
+    const next = host.querySelector("[data-testid=pr-sim-next]");
+    if (next) {
+      if (blocked) next.setAttribute("aria-disabled", "true");
+      else next.removeAttribute("aria-disabled");
+    }
+    const detail = host.querySelector(".detail");
+    if (!detail) { paintPrLab(); return; }
+    const fixes = (st.fixes && !runtime.pr.fixed) ? st.fixes.map((f) => `
+      <button type="button" data-testid="pr-fix-option" data-correct="${f.correct ? "true" : "false"}">${esc(f.text)}</button>`).join("") : "";
+    const fb = runtime.pr.feedback
+      ? `<p data-testid="pr-fix-feedback" class="pr-fix-feedback" data-state="${runtime.pr.feedback.state}">${esc(runtime.pr.feedback.why)}</p>`
+      : "";
+    const mergeEl = (sc.id === "bugbot-neutral" && st.mergeGate)
+      ? `<p data-testid="pr-merge-blocked" data-value="${runtime.pr.failOn ? "true" : "false"}">${runtime.pr.failOn ? "Merge is blocked. Fail-on-unresolved is on." : "Merge is not blocked. Findings are still neutral."}</p>`
+      : "";
+    const toggle = sc.id === "bugbot-neutral"
+      ? `<label class="check-row"><input type="checkbox" data-testid="bugbot-fail-toggle" ${runtime.pr.failOn ? "checked" : ""} /><span>Bugbot fails on unresolved findings</span></label>`
+      : "";
+    detail.innerHTML = `<p>${esc(st.kid)}</p><p>${esc(st.grownUp)}</p><p class="who"><strong>Who.</strong> ${esc(st.actor)}</p>${toggle}${mergeEl}${fixes ? `<div class="stack">${fixes}</div>` : ""}${fb}`;
+  }
+
+  function setStat(id, value, text) {
+    const el = document.querySelector(`[data-testid="${id}"]`);
+    if (!el) return;
+    el.setAttribute("data-value", String(value));
+    el.textContent = text == null ? String(value) : text;
+  }
+
+  function paintCostCalc() {
+    const host = document.querySelector("[data-testid=cost-calc]");
+    if (!host) return;
+    const c = runtime.cost;
+    const m = costMath(c);
+    setStat("cost-weekly-runs", m.runs);
+    setStat("cost-per-run", m.per.toFixed(4));
+    setStat("cost-weekly-usd", m.weekly.toFixed(2));
+    const intervals = [5, 15, 30, 60, 240, 1440];
+    const items = intervals.map((iv) => {
+      const w = costMath({ ...c, interval: iv }).weekly;
+      return { label: iv === 1440 ? "day" : iv + "m", value: Number(w.toFixed(2)), valueLabel: w.toFixed(2), selected: iv === m.interval, testid: "cost-bar", attrs: { "data-interval": iv } };
+    });
+    const chart = host.querySelector("[data-testid=cost-chart]");
+    if (chart) chart.innerHTML = CH.barChart(items, { testid: "cost-chart", label: `Weekly routine cost $${m.weekly.toFixed(2)} at ${m.interval} minutes` });
+  }
+
+  function paintBudgetCalc() {
+    const host = document.querySelector("[data-testid=budget-calc]");
+    if (!host) return;
+    const b = runtime.budget;
+    const m = budgetMath(b);
+    setStat("budget-per-pr", m.per.toFixed(2));
+    setStat("budget-prs", m.prs);
+    host.querySelectorAll("[data-testid=budget-model]").forEach((btn) => {
+      btn.setAttribute("aria-pressed", btn.getAttribute("data-model") === b.model ? "true" : "false");
+    });
+    const items = Object.entries(D.modelPrices).map(([id, p]) => {
+      const per = budgetMath({ ...b, model: id }).per;
+      const prs = Math.floor((Number(b.usd) || 0) / (per || 1));
+      return { label: p.label.replace("Claude ", ""), value: prs, selected: id === b.model, testid: "budget-bar", attrs: { "data-model": id } };
+    });
+    const chart = host.querySelector("[data-testid=budget-chart]");
+    if (chart) chart.innerHTML = CH.barChart(items, { testid: "budget-chart", label: `${m.prs} PRs at $${Number(b.usd)} on ${m.prices.label}`, marker: 148, markerLabel: "148 at ~$300" });
+  }
+
+  function paintBoardChart() {
+    const n = runtime.boardSize;
+    ["github-projects", "linear-basic", "azure-devops", "jira"].forEach((id) => {
+      const v = boardValue(id, n);
+      const el = document.querySelector(`[data-testid=board-cost][data-board="${id}"]`);
+      if (el) {
+        el.setAttribute("data-value", String(v));
+        el.textContent = `${D.boardPricing[id].label}: ${v === "paid" ? "paid" : "$" + v}`;
+      }
+    });
+    const host = document.querySelector("[data-testid=board-chart]");
+    if (!host) return;
+    const ids = ["github-projects", "linear-basic", "azure-devops", "jira"];
+    const series = ids.map((id) => ({
+      id,
+      label: D.boardPricing[id].label,
+      points: Array.from({ length: 20 }, (_, i) => ({ x: i + 1, y: boardValue(id, i + 1) }))
+    }));
+    const svgHost = host.matches("svg") ? host.parentElement : host;
+    if (svgHost) svgHost.innerHTML = CH.lineChart(series, { testid: "board-chart-svg", label: `Board cost at team size ${n}` });
   }
 
   function copyText(text, btn) {
@@ -1055,10 +1160,7 @@
     fb.textContent = why;
     card.appendChild(fb);
     paintHeader();
-    setTimeout(() => {
-      if (dueReviews().length) openReview();
-      else document.getElementById("review-sheet").hidden = true;
-    }, 400);
+    document.getElementById("review-sheet").hidden = true;
   }
 
   function jump(id) {
@@ -1118,7 +1220,7 @@
           : esc(t.getAttribute("data-why"));
         paintHeader();
         const radar = document.querySelector("[data-testid=mastery-radar]");
-        if (radar) replaceWidget("[data-testid=mastery-radar]", CH.radarChart(mastery(), { testid: "mastery-radar", size: 300, label: `Mastery radar, mean ${meanScore()} percent` }));
+        if (radar) replaceWidget("[data-testid=mastery-radar]", CH.radarChart(mastery(), { testid: "mastery-radar", size: 300, axes: true, label: `Mastery radar, mean ${meanScore()} percent` }));
         return;
       }
 
@@ -1151,7 +1253,7 @@
       }
       if (tid === "pr-scenario") {
         runtime.pr = { scenario: t.getAttribute("data-scenario"), index: 0, fixed: false, failOn: false, feedback: null };
-        replaceWidget("[data-testid=pr-lab]", renderPrLab());
+        paintPrLab();
         return;
       }
       if (tid === "pr-sim-next") {
@@ -1160,21 +1262,21 @@
         if (blocked) return;
         runtime.pr.index = Math.min(currentPr().states.length - 1, runtime.pr.index + 1);
         runtime.pr.feedback = null;
-        replaceWidget("[data-testid=pr-lab]", renderPrLab());
+        paintPrLabSoft();
         return;
       }
       if (tid === "pr-sim-back") {
         runtime.pr.index = Math.max(0, runtime.pr.index - 1);
         runtime.pr.fixed = false;
         runtime.pr.feedback = null;
-        replaceWidget("[data-testid=pr-lab]", renderPrLab());
+        paintPrLabSoft();
         return;
       }
       if (tid === "pr-sim-reset") {
         runtime.pr.index = 0;
         runtime.pr.fixed = false;
         runtime.pr.feedback = null;
-        replaceWidget("[data-testid=pr-lab]", renderPrLab());
+        paintPrLabSoft();
         return;
       }
       if (tid === "pr-fix-option") {
@@ -1183,7 +1285,7 @@
         const picked = (st.fixes || []).find((f) => f.text === t.textContent);
         runtime.pr.feedback = { state: ok ? "correct" : "wrong", why: (picked && picked.why) || t.textContent };
         if (ok) runtime.pr.fixed = true;
-        replaceWidget("[data-testid=pr-lab]", renderPrLab());
+        paintPrLab();
         return;
       }
       if (tid === "sim-start") {
@@ -1262,7 +1364,7 @@
       }
       if (tid === "budget-model") {
         runtime.budget.model = t.getAttribute("data-model");
-        replaceWidget("[data-testid=budget-calc]", renderBudgetCalc());
+        paintBudgetCalc();
         return;
       }
       if (t.hasAttribute("data-cost-preset")) {
@@ -1270,7 +1372,11 @@
         runtime.cost.priceIn = p.in;
         runtime.cost.priceCache = p.cache;
         runtime.cost.priceOut = p.out;
-        replaceWidget("[data-testid=cost-calc]", renderCostCalc());
+        ["cost-price-in", "cost-price-cache", "cost-price-out"].forEach((id, i) => {
+          const el = document.querySelector(`[data-testid=${id}]`);
+          if (el) el.value = [p.in, p.cache, p.out][i];
+        });
+        paintCostCalc();
         return;
       }
       if (tid === "exam-start") {
@@ -1340,21 +1446,8 @@
       }
       if (tid === "bugbot-fail-toggle") {
         runtime.pr.failOn = t.checked;
-        replaceWidget("[data-testid=pr-lab]", renderPrLab());
+        paintPrLab();
         return;
-      }
-      if (tid === "cost-interval" || tid === "cost-tokens-in" || tid === "cost-tokens-out" || tid === "cost-cache-share" || tid === "cost-price-in" || tid === "cost-price-cache" || tid === "cost-price-out") {
-        const costMap = {
-          "cost-interval": "interval",
-          "cost-tokens-in": "tokensIn",
-          "cost-tokens-out": "tokensOut",
-          "cost-cache-share": "cacheShare",
-          "cost-price-in": "priceIn",
-          "cost-price-cache": "priceCache",
-          "cost-price-out": "priceOut"
-        };
-        runtime.cost[costMap[tid]] = tid === "cost-interval" ? Number(t.value) : t.value;
-        replaceWidget("[data-testid=cost-calc]", renderCostCalc());
       }
     });
 
@@ -1382,8 +1475,7 @@
       }
       if (tid === "board-team-size") {
         runtime.boardSize = Math.max(1, Math.min(20, Number(t.value) || 1));
-        const host = t.closest(".widget");
-        if (host) host.outerHTML = renderBoardChart();
+        paintBoardChart();
         return;
       }
       if (tid === "glossary-search") {
@@ -1409,11 +1501,7 @@
       };
       if (costMap[tid]) {
         runtime.cost[costMap[tid]] = tid === "cost-interval" ? Number(t.value) : t.value;
-        const keep = tid;
-        const val = t.value;
-        replaceWidget("[data-testid=cost-calc]", renderCostCalc());
-        const again = document.querySelector(`[data-testid=${keep}]`);
-        if (again && again.tagName !== "SELECT") { again.focus(); }
+        paintCostCalc();
         return;
       }
       const budMap = {
@@ -1424,7 +1512,7 @@
       };
       if (budMap[tid]) {
         runtime.budget[budMap[tid]] = t.value;
-        replaceWidget("[data-testid=budget-calc]", renderBudgetCalc());
+        paintBudgetCalc();
       }
     });
   }
