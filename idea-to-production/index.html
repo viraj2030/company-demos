@@ -9,40 +9,44 @@
 </head>
 <body>
   <div class="sticky-bar" id="sticky-bar">
-    <div
-      class="progress"
-      data-testid="progress"
-      data-progress="0"
-      role="progressbar"
-      aria-valuemin="0"
-      aria-valuemax="100"
-      aria-valuenow="0"
-      aria-label="Mean mastery across eight skills"
-    >
-      <div class="progress-copy">
-        <span class="progress-kicker">Mastery</span>
-        <span id="progress-text">0 percent</span>
-      </div>
-      <div class="progress-track" aria-hidden="true">
-        <div class="progress-fill" id="progress-fill"></div>
-      </div>
-    </div>
     <div class="sticky-tools">
       <button type="button" id="mini-radar-btn" class="icon-btn" aria-label="Open mastery radar">
         <span id="mini-radar" class="mini-radar" aria-hidden="true"></span>
       </button>
-      <div class="review-chip" data-testid="review-deck">
-        <span data-testid="review-count" data-value="0" id="review-count">0 due</span>
-        <button type="button" data-testid="review-start" id="review-start">Review</button>
+      <div
+        class="progress"
+        data-testid="progress"
+        data-progress="0"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        aria-label="Mean mastery across eight skills"
+      >
+        <div class="progress-copy">
+          <span class="progress-kicker">Mastery</span>
+          <span id="progress-text">0 percent</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
       </div>
+      <div class="review-chip" data-testid="review-deck">
+        <button type="button" data-testid="review-start" id="review-start">
+          Review
+          <span data-testid="review-count" data-value="0" id="review-count">0</span>
+        </button>
+      </div>
+      <button type="button" data-testid="chapter-nav-toggle" id="chapter-nav-toggle" aria-expanded="false" aria-controls="chapter-nav">Jump</button>
+    </div>
+    <nav id="chapter-nav" data-testid="chapter-nav" hidden>
       <label class="search-wrap" for="search-input">
         <span class="sr-only">Search the lesson</span>
         <input id="search-input" data-testid="search-input" type="search" placeholder="Search" autocomplete="off" />
       </label>
-      <button type="button" data-testid="chapter-nav-toggle" id="chapter-nav-toggle" aria-expanded="false" aria-controls="chapter-nav">Jump</button>
-    </div>
-    <div id="search-results" class="search-results" hidden></div>
-    <nav id="chapter-nav" data-testid="chapter-nav" hidden></nav>
+      <div id="search-results" class="search-results" hidden></div>
+      <div id="chapter-nav-links"></div>
+    </nav>
   </div>
 
   <div id="review-sheet" class="sheet" hidden>

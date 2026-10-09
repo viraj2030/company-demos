@@ -76,7 +76,7 @@
     const size = opts.size || 280;
     const cx = size / 2;
     const cy = size / 2 + 4;
-    const r = size * 0.34;
+    const r = size * (opts.labels === false ? 0.42 : 0.34);
     const n = axes.length;
     const rings = [0.25, 0.5, 0.75, 1].map((f) => {
       const pts = axes.map((_, i) => {
@@ -91,9 +91,12 @@
       const y = cy + Math.sin(a) * r;
       const lx = cx + Math.cos(a) * (r + 22);
       const ly = cy + Math.sin(a) * (r + 18);
+      const text = opts.labels === false
+        ? ""
+        : `<text x="${lx}" y="${ly}" text-anchor="middle" font-size="9" fill="currentColor">${esc(axis.label || axis.skill)}</text>`;
       return `
         <line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"></line>
-        <text x="${lx}" y="${ly}" text-anchor="middle" font-size="9" fill="currentColor">${esc(axis.label || axis.skill)}</text>
+        ${text}
         <g ${opts.axes ? `data-testid="mastery-axis" data-skill="${esc(axis.skill)}" data-earned="${esc(axis.earned)}" data-possible="${esc(axis.possible)}" data-score="${esc(axis.score)}"` : `data-skill="${esc(axis.skill)}"`}>
           <circle cx="${cx + Math.cos(a) * r * ((Number(axis.score) || 0) / 100)}" cy="${cy + Math.sin(a) * r * ((Number(axis.score) || 0) / 100)}" r="3" fill="var(--accent)"></circle>
         </g>`;
