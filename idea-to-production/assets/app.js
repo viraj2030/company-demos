@@ -297,19 +297,19 @@
     const roles = D.teamRoles.map((r) => `
       <label class="role-row">
         <input type="checkbox" data-testid="team-role" data-role="${esc(r.id)}" ${state.team.roles.includes(r.id) ? "checked" : ""} />
-        <span><strong>${esc(r.name)}</strong><span class="how">${esc(r.job)}</span></span>
+        <span><strong>${esc(r.name)}</strong></span>
       </label>`).join("");
     const warn = directCount() > 5
       ? `<p data-testid="team-warning">You have more than 5 direct reports. Peter Yang: most people cannot drive more than 4-5 threads.</p>`
       : "";
     return `<section class="widget" data-testid="team-builder">
       <h3>Team builder</h3>
-      <p class="kid">Tick the bots you want. Name the areas. Copy a spec you can paste.</p>
+      <p class="kid">Tick the bots you want. Name the areas. The spec below is what you paste.</p>
       ${roles}
       <label class="field-label" for="team-area">Areas (comma separated)</label>
       <input id="team-area" data-testid="team-area" type="text" value="${esc(state.team.areas)}" />
       ${warn}
-      <label class="field-label" for="team-spec">Team spec</label>
+      <label class="field-label" for="team-spec">Your spec</label>
       <textarea id="team-spec" data-testid="team-spec" class="team-spec" readonly>${esc(teamSpecText())}</textarea>
       <button type="button" data-testid="team-copy" data-copied="false">Copy spec</button>
     </section>`;
@@ -368,13 +368,19 @@
     const intervals = [5, 15, 30, 60, 240, 1440];
     const items = intervals.map((iv) => {
       const w = costMath({ ...c, interval: iv }).weekly;
-      return { label: iv === 1440 ? "day" : iv + "m", value: Number(w.toFixed(2)), valueLabel: w.toFixed(2), selected: iv === m.interval, testid: "cost-bar", attrs: { "data-interval": iv } };
+      return { label: iv === 1440 ? "day" : iv + "m", value: Number(w.toFixed(2)), valueLabel: w >= 10 ? w.toFixed(0) : w.toFixed(2), selected: iv === m.interval, testid: "cost-bar", attrs: { "data-interval": iv } };
     });
     return `<section class="widget" data-testid="cost-calc">
       <h3>Routine cost calculator</h3>
       <p class="muted">Example numbers, change them. Illustrative: Cursor list prices, not Grok Bot's meter.</p>
       <label class="field-label" for="cost-interval">Interval (minutes)</label>
       <select id="cost-interval" data-testid="cost-interval">${intervals.map((iv) => `<option value="${iv}" ${iv === c.interval ? "selected" : ""}>${iv}</option>`).join("")}</select>
+      <p class="stat">Weekly runs <strong data-testid="cost-weekly-runs" data-value="${m.runs}">${m.runs}</strong></p>
+      <p class="stat">Cost per run <strong data-testid="cost-per-run" data-value="${m.per.toFixed(4)}">${m.per.toFixed(4)}</strong></p>
+      <p class="stat">Weekly USD <strong data-testid="cost-weekly-usd" data-value="${m.weekly.toFixed(2)}">${m.weekly.toFixed(2)}</strong></p>
+      <p class="muted">Monthly (x 52 / 12): $${m.monthly.toFixed(2)}</p>
+      <div data-testid="cost-chart">${CH.barChart(items, { testid: "cost-chart", label: `Weekly routine cost $${m.weekly.toFixed(2)} at ${m.interval} minutes` })}</div>
+      <div class="row presets">${Object.entries(D.modelPrices).map(([id, p]) => `<button type="button" data-cost-preset="${id}">${esc(p.label)}</button>`).join("")}</div>
       <label class="field-label" for="cost-tokens-in">Tokens in</label>
       <input id="cost-tokens-in" data-testid="cost-tokens-in" type="number" inputmode="decimal" value="${c.tokensIn}" />
       <label class="field-label" for="cost-tokens-out">Tokens out</label>
@@ -387,12 +393,6 @@
       <input id="cost-price-cache" data-testid="cost-price-cache" type="number" inputmode="decimal" value="${c.priceCache}" />
       <label class="field-label" for="cost-price-out">Price out</label>
       <input id="cost-price-out" data-testid="cost-price-out" type="number" inputmode="decimal" value="${c.priceOut}" />
-      <div class="row">${Object.entries(D.modelPrices).map(([id, p]) => `<button type="button" data-cost-preset="${id}">${esc(p.label)}</button>`).join("")}</div>
-      <p class="stat">Weekly runs <strong data-testid="cost-weekly-runs" data-value="${m.runs}">${m.runs}</strong></p>
-      <p class="stat">Cost per run <strong data-testid="cost-per-run" data-value="${m.per.toFixed(4)}">${m.per.toFixed(4)}</strong></p>
-      <p class="stat">Weekly USD <strong data-testid="cost-weekly-usd" data-value="${m.weekly.toFixed(2)}">${m.weekly.toFixed(2)}</strong></p>
-      <p class="muted">Monthly (x 52 / 12): $${m.monthly.toFixed(2)}</p>
-      <div data-testid="cost-chart">${CH.barChart(items, { testid: "cost-chart", label: `Weekly routine cost $${m.weekly.toFixed(2)} at ${m.interval} minutes` })}</div>
       <p>GrokBotRadar: a routine firing 672 times a week. Every run rereads the Bot's whole chat. Fix: hourly. 168 runs. Same signal.</p>
       <p class="muted">Audit prompt: Audit your own usage for me. List every routine you own. For each one, tell me: 1. How often it runs 2. How many runs that is per week 3. Whether it posts a message even when nothing changed 4. Whether this is also the Bot I chat with most. Then tell me which one is costing me the most and how to slow it down without breaking the job.</p>
     </section>`;
@@ -428,7 +428,7 @@
       <input id="budget-cache-share" data-testid="budget-cache-share" type="number" inputmode="decimal" value="${b.cacheShare}" />
       <label class="field-label" for="budget-tokens-out">Tokens out</label>
       <input id="budget-tokens-out" data-testid="budget-tokens-out" type="number" inputmode="decimal" value="${b.tokensOut}" />
-      <div class="row">${Object.entries(D.modelPrices).map(([id, p]) => `<button type="button" class="budget-model" data-testid="budget-model" data-model="${id}" aria-pressed="${id === b.model ? "true" : "false"}">${esc(p.label)}</button>`).join("")}</div>
+      <div class="row presets">${Object.entries(D.modelPrices).map(([id, p]) => `<button type="button" class="budget-model" data-testid="budget-model" data-model="${id}" aria-pressed="${id === b.model ? "true" : "false"}">${esc(p.label)}</button>`).join("")}</div>
       <p class="stat">Per PR <strong data-testid="budget-per-pr" data-value="${m.per.toFixed(2)}">${m.per.toFixed(2)}</strong></p>
       <p class="stat">PRs this month <strong data-testid="budget-prs" data-value="${m.prs}">${m.prs}</strong></p>
       <div data-testid="budget-chart">${CH.barChart(items, { testid: "budget-chart", label: `${m.prs} PRs at $${Number(b.usd)} on ${m.prices.label}`, marker: 148, markerLabel: "148 at ~$300" })}</div>
@@ -454,24 +454,25 @@
     return `<section class="widget" data-testid="gate-chart">
       <h3>Risk vs gates</h3>
       <p class="muted">Teaching model, not measured.</p>
-      ${toggles}
       <p>Uncaught: <strong data-testid="gate-uncaught" data-value="${u}">${u}</strong></p>
-      ${rows}
-      <svg role="img" aria-label="${u} failure types still uncaught" viewBox="0 0 340 80" width="100%" height="80">
-        <rect x="10" y="20" width="${Math.max(8, (u / 8) * 320)}" height="28" fill="var(--bad)" rx="6"></rect>
-        <text x="20" y="40" fill="#fff" font-size="14">${u} uncaught</text>
+      <svg role="img" aria-label="${u} failure types still uncaught" viewBox="0 0 340 72" width="100%" height="72">
+        <rect x="10" y="18" width="${Math.max(8, (u / 8) * 320)}" height="32" fill="var(--bad)" rx="6"></rect>
+        <text x="20" y="40" fill="#fff" font-size="15">${u} of 8 still slip through</text>
       </svg>
+      ${toggles}
+      ${rows}
     </section>`;
   }
 
   function renderScaleChart() {
+    const short = { "human-threads": "Threads", "manual-agents": "Manual", "bot-fleet": "Fleet", "solo-phone": "Solo", poteto: "Poteto" };
     const items = D.scaleData.map((s) => ({
-      label: s.label, value: s.value, valueLabel: String(s.value), testid: "scale-bar", attrs: { "data-key": s.key }
+      label: short[s.key] || s.label, value: s.value, valueLabel: String(s.value), testid: "scale-bar", attrs: { "data-key": s.key }
     }));
     return `<section class="widget">
       <h3>Scale chart</h3>
       <p class="kid">Threads a person can drive, agents by hand, a bot fleet, then PRs per month.</p>
-      <div data-testid="scale-chart">${CH.barChart(items, { testid: "scale-chart", label: "Scale: 5 threads, 15 manual agents, 200 bot fleet, 148 and 2500 PRs" })}</div>
+      <div data-testid="scale-chart">${CH.barChart(items, { testid: "scale-chart", log: true, label: "Scale: 5 threads, 15 manual agents, 200 bot fleet, 148 and 2500 PRs" })}</div>
     </section>`;
   }
 
@@ -647,9 +648,9 @@
         <div data-testid="sim-chart">${CH.barChart(chartItems, { label: `Outcome meters, cost ${sim.meters.cost}, risk ${Math.max(0, sim.meters.risk)}` })}</div>
         ${meters}
         <div data-testid="sim-outcome" data-outcome="${sim.outcome}">
-          <h3>${esc(out.title)}</h3>
+          <h3 class="outcome-title">${esc(out.title)}</h3>
           <p>${esc(out.kid)}</p>
-          <p>Your path: ${sim.path.map((p) => p.opt).join(", ")}</p>
+          <p>Your path: ${sim.path.map((p) => p.label || p.opt).join(". ")}</p>
           <p><a href="#${out.chapter}">Open the chapter that teaches the fix</a></p>
         </div>
         <button type="button" data-testid="sim-restart">Start over</button>
@@ -696,14 +697,12 @@
     const c = D.cases.find((x) => x.id === id);
     const i = runtime.cases[id] || 0;
     const step = c.steps[i];
-    const marks = c.steps.map((_, idx) => `<i class="${idx <= i ? "on" : ""}"></i>`).join("");
     const caseLabel = `Case step ${i + 1} of ${c.steps.length}: ${step.title}`;
     return `<section class="widget" data-testid="case-study" data-case="${id}">
       <h3>${esc(c.title)}</h3>
       <p class="muted">${esc(c.source)}</p>
-      <div class="timeline" aria-hidden="true">${marks}</div>
-      <svg role="img" aria-label="${esc(caseLabel)}" viewBox="0 0 340 24" width="100%" height="24">
-        ${c.steps.map((_, idx) => `<circle cx="${12 + idx * (316 / Math.max(c.steps.length - 1, 1))}" cy="12" r="${idx === i ? 6 : 3}" fill="${idx <= i ? "var(--accent)" : "var(--line)"}"></circle>`).join("")}
+      <svg role="img" aria-label="${esc(caseLabel)}" viewBox="0 0 340 28" width="100%" height="28">
+        ${c.steps.map((_, idx) => `<circle cx="${14 + idx * (312 / Math.max(c.steps.length - 1, 1))}" cy="14" r="${idx === i ? 7 : 4}" fill="${idx <= i ? "var(--accent)" : "var(--line)"}"></circle>`).join("")}
       </svg>
       <div data-testid="case-step" data-step="${i}" data-total="${c.steps.length}">
         <p class="badge">${esc(step.label)}</p>
@@ -754,7 +753,7 @@
         return `<a href="#${ch ? ch.id : "start-here"}">${esc(skillMeta(q.skill).label)}</a>`;
       }).join(", ")}</p>`;
       return `<section class="widget exam-box" data-testid="exam">
-        <p data-testid="exam-score" data-score="${score}" data-total="12">You scored ${score} of 12.</p>
+        <p class="exam-score" data-testid="exam-score" data-score="${score}" data-total="12">${pass ? "Passed." : "Not yet."} You scored ${score} of 12.</p>
         ${cert}
         <button type="button" data-testid="exam-start">Try again</button>
       </section>`;
@@ -1056,7 +1055,7 @@
     const intervals = [5, 15, 30, 60, 240, 1440];
     const items = intervals.map((iv) => {
       const w = costMath({ ...c, interval: iv }).weekly;
-      return { label: iv === 1440 ? "day" : iv + "m", value: Number(w.toFixed(2)), valueLabel: w.toFixed(2), selected: iv === m.interval, testid: "cost-bar", attrs: { "data-interval": iv } };
+      return { label: iv === 1440 ? "day" : iv + "m", value: Number(w.toFixed(2)), valueLabel: w >= 10 ? w.toFixed(0) : w.toFixed(2), selected: iv === m.interval, testid: "cost-bar", attrs: { "data-interval": iv } };
     });
     const chart = host.querySelector("[data-testid=cost-chart]");
     if (chart) chart.innerHTML = CH.barChart(items, { testid: "cost-chart", label: `Weekly routine cost $${m.weekly.toFixed(2)} at ${m.interval} minutes` });
@@ -1301,7 +1300,7 @@
         runtime.sim.meters.cost += opt.cost;
         runtime.sim.meters.risk += opt.risk;
         runtime.sim.meters.signal += opt.signal;
-        runtime.sim.path.push({ step: step.id, opt: opt.id });
+        runtime.sim.path.push({ step: step.id, opt: opt.id, label: opt.label });
         replaceWidget("[data-testid=sim]", renderSim());
         return;
       }

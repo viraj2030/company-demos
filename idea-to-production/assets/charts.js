@@ -7,19 +7,25 @@
 
   const barChart = (items, opts = {}) => {
     const width = opts.width || 340;
-    const height = opts.height || 200;
-    const padL = opts.padL || 36;
+    const height = opts.height || 220;
+    const padL = opts.padL || 28;
     const padR = 8;
-    const padT = 16;
-    const padB = 36;
+    const padT = 28;
+    const padB = 40;
     const innerW = width - padL - padR;
     const innerH = height - padT - padB;
     const max = Math.max(...items.map((i) => Number(i.value) || 0), 0.01);
-    const gap = 6;
+    const gap = 8;
     const barW = Math.max(8, (innerW - gap * (items.length - 1)) / items.length);
+    const barH = (v) => {
+      if (!opts.log) return (v / max) * innerH;
+      const lv = Math.log10(Math.max(v, 1));
+      const lm = Math.log10(Math.max(max, 1));
+      return (lv / (lm || 1)) * innerH;
+    };
     const bars = items.map((item, i) => {
       const v = Number(item.value) || 0;
-      const h = (v / max) * innerH;
+      const h = barH(v);
       const x = padL + i * (barW + gap);
       const y = padT + innerH - h;
       const selected = item.selected ? "true" : "false";
@@ -28,11 +34,12 @@
         .join(" ");
       const fill = item.selected ? "var(--accent)" : "var(--accent-soft)";
       const stroke = item.selected ? "var(--accent)" : "var(--line)";
+      const valueSize = String(item.valueLabel || item.value).length > 5 ? 9 : 11;
       return `
         <g data-testid="${esc(item.testid || "chart-bar")}" ${extra} data-value="${esc(item.value)}" data-selected="${selected}">
-          <rect x="${x}" y="${y}" width="${barW}" height="${Math.max(h, 1)}" fill="${fill}" stroke="${stroke}" rx="4"></rect>
-          <text x="${x + barW / 2}" y="${y - 4}" text-anchor="middle" font-size="10" fill="currentColor">${esc(item.valueLabel || item.value)}</text>
-          <text x="${x + barW / 2}" y="${height - 8}" text-anchor="middle" font-size="9" fill="currentColor">${esc(item.label)}</text>
+          <rect x="${x}" y="${y}" width="${barW}" height="${Math.max(h, 4)}" fill="${fill}" stroke="${stroke}" rx="4"></rect>
+          <text x="${x + barW / 2}" y="${Math.max(12, y - 6)}" text-anchor="middle" font-size="${valueSize}" fill="currentColor">${esc(item.valueLabel || item.value)}</text>
+          <text x="${x + barW / 2}" y="${height - 10}" text-anchor="middle" font-size="10" fill="currentColor">${esc(item.label)}</text>
         </g>`;
     }).join("");
     const marker = opts.marker == null ? "" : `

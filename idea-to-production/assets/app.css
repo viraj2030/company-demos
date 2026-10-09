@@ -42,7 +42,7 @@ html {
   font-size: 17px;
   overflow-x: clip;
   background: var(--bg);
-  scroll-padding-top: 11rem;
+  scroll-padding-top: 8.5rem;
 }
 
 body {
@@ -52,9 +52,9 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 img, svg, video, canvas { max-width: 100%; height: auto; }
@@ -87,7 +87,7 @@ button, select, input:not([type="hidden"]), textarea {
   padding: 0.7rem 0.9rem;
   text-align: left;
   cursor: pointer;
-  scroll-margin-top: 11rem;
+  scroll-margin-top: 8.5rem;
 }
 
 input[type="number"],
@@ -171,7 +171,7 @@ a:focus-visible {
 
 .sticky-tools {
   display: grid;
-  grid-template-columns: 48px minmax(88px, auto) 1fr 56px;
+  grid-template-columns: 48px auto minmax(0, 1fr) auto;
   gap: 0.4rem;
   align-items: center;
   padding: 0.4rem 1rem 0.55rem;
@@ -184,26 +184,38 @@ a:focus-visible {
   padding: 0.25rem;
 }
 
+#chapter-nav-toggle {
+  white-space: nowrap;
+  width: auto;
+  min-width: 44px;
+  padding: 0.55rem 0.8rem;
+  text-align: center;
+  overflow-wrap: normal;
+}
+
 .mini-radar { display: block; width: 36px; height: 36px; }
 .mini-radar svg { width: 36px; height: 36px; }
 
 .review-chip {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
   min-width: 0;
 }
 
 .review-chip span {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--muted);
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .review-chip button {
   min-height: 44px;
-  padding: 0.35rem 0.45rem;
+  padding: 0.35rem 0.7rem;
   text-align: center;
+  white-space: nowrap;
 }
 
 .search-wrap { min-width: 0; }
@@ -284,7 +296,7 @@ h3 { margin: 0 0 0.4rem; font-size: 1.08rem; }
 }
 
 .chapter, .widget {
-  scroll-margin-top: 11rem;
+  scroll-margin-top: 8.5rem;
 }
 
 .chapter {
@@ -314,7 +326,8 @@ h3 { margin: 0 0 0.4rem; font-size: 1.08rem; }
 
 .stack { display: flex; flex-direction: column; gap: 0.55rem; }
 .row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.row > button, .row > a { flex: 1; min-width: 44px; }
+.row > button, .row > a { flex: 1 1 calc(50% - 0.5rem); min-width: 44px; }
+.row.presets > button { flex: 1 1 100%; text-align: center; }
 .muted { color: var(--muted); }
 .sources { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.9rem; }
 .hidden { display: none; }
@@ -463,13 +476,22 @@ th, td { border-bottom: 1px solid var(--line); padding: 0.55rem 0.4rem; text-ali
   background: var(--bg);
   border-radius: 10px;
   padding: 0.75rem;
-  min-height: 120px;
+  min-height: 160px;
+  max-height: 280px;
 }
 
 .phase { margin: 1rem 0 0.4rem; font-weight: 700; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
-.chips button { flex: 1 1 auto; text-align: center; }
+.chips button { flex: 1 1 calc(50% - 0.4rem); text-align: center; }
+
+[data-testid="pr-sim-next"][aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.outcome-title { font-size: 1.25rem; margin: 0.4rem 0; }
+.exam-score { font-size: 1.2rem; font-weight: 700; margin: 0 0 0.6rem; }
 
 .status-dot {
   display: inline-block;
